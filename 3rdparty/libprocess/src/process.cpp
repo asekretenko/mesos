@@ -3108,7 +3108,9 @@ void ProcessManager::cleanup(ProcessBase* process)
   process->events->consumer.decomission();
 
   // Remove help strings for all installed routes for this process.
-  dispatch(help, &Help::remove, process->pid.id);
+  // Need to disambiguate overloaded method.
+  bool(Help::*removeHelp)(const std::string&) = &Help::remove;
+  dispatch(help, removeHelp, process->pid.id);
 
     // Possible gate non-libprocess threads are waiting at.
   std::shared_ptr<Gate> gate = process->gate;
