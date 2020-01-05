@@ -154,6 +154,102 @@ TEST_F(ProcessTest, Spawn)
   wait(pid);
 }
 
+namespace process {
+
+template <typename T, typename...MethodArgs, typename ...Args>                                                 
+void deadbeef(
+    const PID<T>& pid,
+    void (T::*method)(MethodArgs...),
+    Args&&... args)
+{                                                                     
+  auto call = [method](ProcessBase* process, MethodArgs&&... args) {      
+    assert(process != nullptr);                           
+    T* t = dynamic_cast<T*>(process);                     
+    assert(t != nullptr);                                 
+    (t->*method)(std::forward<MethodArgs>(args)...);
+  };
+
+  std::unique_ptr<lambda::CallableOnce<void(ProcessBase*)>> f(        
+      new lambda::CallableOnce<void(ProcessBase*)>(                   
+          lambda::partial(std::move(call), lambda::_1, std::forward<Args>(args)...)));
+  internal::dispatch(pid, std::move(f), &typeid(method));
+}
+
+
+template <typename T, typename R, typename...MethodArgs, typename ...Args>                                                 
+Future<R> deadbeef(
+    const PID<T>& pid,
+    Future<R> (T::*method)(MethodArgs...),
+    Args&&... args)
+{ 
+  Promise<R> promise;
+  Future<R> future = promise.future();
+                                                                    
+  auto call = [method](ProcessBase* process, Promise<R>&& promise_, MethodArgs&&... args) {      
+    assert(process != nullptr);                           
+    T* t = dynamic_cast<T*>(process);                     
+    assert(t != nullptr);                                 
+    promise_.associate((t->*method)(std::forward<MethodArgs>(args)...));
+  };
+
+  std::unique_ptr<lambda::CallableOnce<void(ProcessBase*)>> f(        
+      new lambda::CallableOnce<void(ProcessBase*)>(                   
+          lambda::partial(std::move(call), lambda::_1, std::move(promise), std::forward<Args>(args)...)));
+
+  internal::dispatch(pid, std::move(f), &typeid(method));
+  return future;
+}
+
+namespace cpp17 {
+
+template<class...Ts> struct make_void {using type = void;};
+template<class...Ts> using void_t = typename make_void<Ts...>::type;
+
+}
+
+
+template<
+  class F, 
+  class X = typename std::decay<decltype(std::declval<F>().get())>::type >
+struct FutureReturn{ using Type = X;};
+
+
+template<class F, class = cpp17::void_t<> > 
+struct IsFuture : std::false_type {};
+
+
+template<class F>
+struct IsFuture<F, cpp17::void_t<typename FutureReturn<F>::Type> >
+  : std::is_same<F, Future<typename FutureReturn<F>::Type>> {};
+
+
+// This overload is disabled for methods returning Future
+template <typename T, typename R, typename...MethodArgs, typename ...Args>                                                 
+typename std::enable_if<!IsFuture<R>::value, Future<R>>::type deadbeef(
+    const PID<T>& pid,
+    R (T::*method)(MethodArgs...),
+    Args&&... args)
+{ 
+  Promise<R> promise;
+  Future<R> future = promise.future();
+                                                                    
+  auto call = [method](ProcessBase* process, Promise<R>&& promise_, MethodArgs&&... args) {      
+    assert(process != nullptr);                           
+    T* t = dynamic_cast<T*>(process);                     
+    assert(t != nullptr);                                 
+    promise_.set((t->*method)(std::forward<MethodArgs>(args)...));
+  };
+
+  std::unique_ptr<lambda::CallableOnce<void(ProcessBase*)>> f(        
+      new lambda::CallableOnce<void(ProcessBase*)>(                   
+          lambda::partial(std::move(call), lambda::_1, std::move(promise), std::forward<Args>(args)...)));
+
+  internal::dispatch(pid, std::move(f), &typeid(method));
+  return future;
+}
+
+}
+
 
 struct MoveOnly
 {
@@ -203,15 +299,15 @@ TEST_F(ProcessTest, Dispatch)
   ASSERT_FALSE(!pid);
 
   dispatch(pid, &DispatchProcess::func0);
-  dispatch(pid, &DispatchProcess::func5, MoveOnly());
+  process::deadbeef(pid, &DispatchProcess::func5, MoveOnly());
 
   Future<bool> future;
 
-  future = dispatch(pid, &DispatchProcess::func1, true);
+  future = process::deadbeef(pid, &DispatchProcess::func1, true);
 
   EXPECT_TRUE(future.get());
 
-  future = dispatch(pid, &DispatchProcess::func2, true);
+  future = process::deadbeef(pid, &DispatchProcess::func2, true);
 
   EXPECT_TRUE(future.get());
 
@@ -346,14 +442,14 @@ TEST_F(ProcessTest, Defer2)
 
   PID<DeferProcess> pid = spawn(process);
 
-  Future<string> f = dispatch(pid, &DeferProcess::func1, 41);
+  Future<string> f = process::deadbeef(pid, &DeferProcess::func1, 41);
 
   f.await();
 
   ASSERT_TRUE(f.isReady());
   EXPECT_EQ("41", f.get());
 
-  f = dispatch(pid, &DeferProcess::func2, 41);
+  f = process::deadbeef(pid, &DeferProcess::func2, 41);
 
   f.await();
 
@@ -446,7 +542,7 @@ TEST_F(ProcessTest, Expect)
 
   Future<Nothing> func = DROP_DISPATCH(pid, &HandlersProcess::func);
 
-  dispatch(pid, &HandlersProcess::func, pid, "");
+  process::deadbeef(pid, &HandlersProcess::func, pid, "");
 
   AWAIT_EXPECT_READY(func);
 
@@ -470,13 +566,13 @@ TEST_F(ProcessTest, Action)
     .WillOnce(FutureArg<1>(&future1))
     .WillOnce(FutureSatisfy(&future2));
 
-  dispatch(pid, &HandlersProcess::func, pid, "hello world");
+  process::deadbeef(pid, &HandlersProcess::func, pid, "hello world");
 
   AWAIT_EXPECT_EQ("hello world", future1);
 
   EXPECT_TRUE(future2.isPending());
 
-  dispatch(pid, &HandlersProcess::func, pid, "hello world");
+  process::deadbeef(pid, &HandlersProcess::func, pid, "hello world");
 
   AWAIT_EXPECT_READY(future2);
 
@@ -2083,7 +2179,7 @@ TEST_F(ProcessTest, ProcessesEndpointNoHang)
   Future<Nothing> inside = promise.future();
 
   Future<Nothing> waited =
-    dispatch(process, &TestProcess::wait_for_terminate, std::move(promise));
+    process::deadbeef(process, &TestProcess::wait_for_terminate, std::move(promise));
 
   AWAIT_READY(inside);
 
