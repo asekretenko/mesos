@@ -351,7 +351,8 @@ libprocess_tests_SOURCES =					\
   src/tests/subprocess_tests.cpp				\
   src/tests/system_tests.cpp					\
   src/tests/timeseries_tests.cpp				\
-  src/tests/time_tests.cpp
+  src/tests/time_tests.cpp					\
+  src/tests/weak_cache_tests.cpp
 
 GRPC_TESTS_PROTOS =			\
   grpc_tests.grpc.pb.cc			\

@@ -45,7 +45,8 @@ set(PROCESS_TESTS_SRC
   subprocess_tests.cpp
   system_tests.cpp
   time_tests.cpp
-  timeseries_tests.cpp)
+  timeseries_tests.cpp
+  weak_cache_tests.cpp)
 
 if (NOT WIN32)
   # TODO(andschwa): See MESOS-5818.

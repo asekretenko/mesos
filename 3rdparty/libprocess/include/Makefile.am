@@ -76,4 +76,5 @@ nobase_include_HEADERS =		\
   process/time.hpp			\
   process/timeout.hpp			\
   process/timer.hpp			\
-  process/timeseries.hpp
+  process/timeseries.hpp		\
+  process/weak_cache.hpp
