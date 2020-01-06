@@ -38,12 +38,7 @@ namespace process {
 // Future<int> f = dispatch(pid, &Fibonacci::compute, 10);
 //
 // Because the pid argument is "typed" we can ensure that methods are
-// only invoked on processes that are actually of that type. Providing
-// this mechanism for varying numbers of function types and arguments
-// requires support for variadic templates, slated to be released in
-// C++11. Until then, we use the Boost preprocessor macros to
-// accomplish the same thing (albeit less cleanly). See below for
-// those definitions.
+// only invoked on processes that are actually of that type.
 //
 // Dispatching is done via a level of indirection. The dispatch
 // routine itself creates a promise that is passed as an argument to a
@@ -161,49 +156,36 @@ struct Dispatch
 
 } // namespace internal {
 
+// TODO: move to proper locations
+namespace cpp17 {
 
-// Okay, now for the definition of the dispatch routines
-// themselves. For each routine we provide the version in C++11 using
-// variadic templates so the reader can see what the Boost
-// preprocessor macros are effectively providing. Using C++11 closures
-// would shorten these definitions even more.
-//
-// First, definitions of dispatch for methods returning void:
+template<class...Ts> struct make_void {using type = void;};
+template<class...Ts> using void_t = typename make_void<Ts...>::type;
 
-template <typename T>
-void dispatch(const PID<T>& pid, void (T::*method)())
-{
-  std::unique_ptr<lambda::CallableOnce<void(ProcessBase*)>> f(
-      new lambda::CallableOnce<void(ProcessBase*)>(
-          [=](ProcessBase* process) {
-            assert(process != nullptr);
-            T* t = dynamic_cast<T*>(process);
-            assert(t != nullptr);
-            (t->*method)();
-          }));
+template< bool B, class T, class F >
+using conditional_t = typename std::conditional<B,T,F>::type;
 
-  internal::dispatch(pid, std::move(f), &typeid(method));
-}
+template<class...> struct conjunction : std::true_type { };
+template<class B1> struct conjunction<B1> : B1 { };
 
-template <typename T>
-void dispatch(const Process<T>& process, void (T::*method)())
-{
-  dispatch(process.self(), method);
-}
-
-template <typename T>
-void dispatch(const Process<T>* process, void (T::*method)())
-{
-  dispatch(process->self(), method);
+template<class B1, class... Bn>
+struct conjunction<B1, Bn...> 
+    : conditional_t<bool(B1::value), conjunction<Bn...>, B1> {};
 }
 
 
+// Definition for methods returning void
 template <typename T, typename...MethodArgs, typename ...Args>                                                 
 void dispatch(
     const PID<T>& pid,
     void (T::*method)(MethodArgs...),
     Args&&... args)
-{                                                                     
+{
+  static_assert(sizeof...(MethodArgs) == sizeof...(Args), "");
+  static_assert(
+      cpp17::conjunction<std::is_convertible<Args, MethodArgs>...>::value,
+      "Some of the arguments are not convertible to method arguments");
+
   auto call = [method](ProcessBase* process, MethodArgs&&... args) {      
     assert(process != nullptr);                           
     T* t = dynamic_cast<T*>(process);                     
@@ -217,64 +199,7 @@ void dispatch(
   internal::dispatch(pid, std::move(f), &typeid(method));
 }
                                                                         
-/*
-template <typename T, typename...MethodArgs, typename ...Args>                                                 
-void dispatch(                                           
-    const Process<T>& process,                           
-    void (T::*method)(MethodArgs...),                
-    Args&&.. args)                       
-{                                                        
-  dispatch(process.self(), method, std::forward<Args>(args)...);
-}
-
-
-template <typename T, typename...MethodArgs, typename ...Args>                                                 
-void dispatch(                                           
-    const Process<T>* process,                           
-    void (T::*method)(MethodArgs...),                
-    Args&&.. args)                       
-{                                                        
-  dispatch(process->self(), method, std::forward<Args>(args)...);
-}
-*/
-
-// Next, definitions of methods returning a future:
-
-template <typename R, typename T>
-Future<R> dispatch(const PID<T>& pid, Future<R> (T::*method)())
-{
-  std::unique_ptr<Promise<R>> promise(new Promise<R>());
-  Future<R> future = promise->future();
-
-  std::unique_ptr<lambda::CallableOnce<void(ProcessBase*)>> f(
-      new lambda::CallableOnce<void(ProcessBase*)>(
-          lambda::partial(
-              [=](std::unique_ptr<Promise<R>> promise, ProcessBase* process) {
-                assert(process != nullptr);
-                T* t = dynamic_cast<T*>(process);
-                assert(t != nullptr);
-                promise->associate((t->*method)());
-              },
-              std::move(promise),
-              lambda::_1)));
-
-  internal::dispatch(pid, std::move(f), &typeid(method));
-
-  return future;
-}
-
-template <typename R, typename T>
-Future<R> dispatch(const Process<T>& process, Future<R> (T::*method)())
-{
-  return dispatch(process.self(), method);
-}
-
-template <typename R, typename T>
-Future<R> dispatch(const Process<T>* process, Future<R> (T::*method)())
-{
-  return dispatch(process->self(), method);
-}
-
+// Definition for methods returning a future
 
 template <typename T, typename R, typename...MethodArgs, typename ...Args>                                                 
 Future<R> dispatch(
@@ -282,6 +207,11 @@ Future<R> dispatch(
     Future<R> (T::*method)(MethodArgs...),
     Args&&... args)
 { 
+  static_assert(sizeof...(MethodArgs) == sizeof...(Args), "");
+  static_assert(
+      cpp17::conjunction<std::is_convertible<Args, MethodArgs>...>::value,
+      "Some of the arguments are not convertible to method arguments");
+
   Promise<R> promise;
   Future<R> future = promise.future();
                                                                     
@@ -300,74 +230,7 @@ Future<R> dispatch(
   return future;
 }
 
-/*
-template <typename T, typename R, typename...MethodArgs, typename ...Args>                                                 
-Future<R> dispatch(
-    const Process<T>& process,
-    Future<R> (T::*method)(MethodArgs...),
-    Args&&... args)
-{
-  return dispatch(process.self(), method, std::forward<Args>(args)...);
-}
-
-
-template <typename T, typename R, typename...MethodArgs, typename ...Args>                                                 
-Future<R> dispatch(
-    const Process<T>* process,
-    Future<R> (T::*method)(MethodArgs...),
-    Args&&... args)
-{
-  return dispatch(process->self(), method, std::forward<Args>(args)...);
-}
-*/
-
-// Next, definitions of methods returning a value.
-
-template <typename R, typename T>
-Future<R> dispatch(const PID<T>& pid, R (T::*method)())
-{
-  std::unique_ptr<Promise<R>> promise(new Promise<R>());
-  Future<R> future = promise->future();
-
-  std::unique_ptr<lambda::CallableOnce<void(ProcessBase*)>> f(
-      new lambda::CallableOnce<void(ProcessBase*)>(
-          lambda::partial(
-              [=](std::unique_ptr<Promise<R>> promise, ProcessBase* process) {
-                assert(process != nullptr);
-                T* t = dynamic_cast<T*>(process);
-                assert(t != nullptr);
-                promise->set((t->*method)());
-              },
-              std::move(promise),
-              lambda::_1)));
-
-  internal::dispatch(pid, std::move(f), &typeid(method));
-
-  return future;
-}
-
-template <typename R, typename T>
-Future<R> dispatch(const Process<T>& process, R (T::*method)())
-{
-  return dispatch(process.self(), method);
-}
-
-template <typename R, typename T>
-Future<R> dispatch(const Process<T>* process, R (T::*method)())
-{
-  return dispatch(process->self(), method);
-}
-
-
 // TODO: move to proper locations
-namespace cpp17 {
-
-template<class...Ts> struct make_void {using type = void;};
-template<class...Ts> using void_t = typename make_void<Ts...>::type;
-
-}
-
-
 template<
   class F, 
   class X = typename std::decay<decltype(std::declval<F>().get())>::type >
@@ -390,6 +253,11 @@ typename std::enable_if<!IsFuture<R>::value, Future<R>>::type dispatch(
     R (T::*method)(MethodArgs...),
     Args&&... args)
 { 
+  static_assert(sizeof...(MethodArgs) == sizeof...(Args), "");
+  static_assert(
+      cpp17::conjunction<std::is_convertible<Args, MethodArgs>...>::value,
+      "Some of the arguments are not convertible to method arguments");
+
   Promise<R> promise;
   Future<R> future = promise.future();
                                                                     
