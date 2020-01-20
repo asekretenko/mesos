@@ -214,11 +214,17 @@ public:
   };
 
   /**
-   * NOTE: As this function can be used synchronously by actors
-   * it is essential that it does not block!
+   * This method returns whether access to the specified object is authorized
+   * or not, or Error. The Error is returned in case of:
+   * - transient authorization failures
+   * - authorizer or underlying systems being in invalid state
+   * - the Object provided by Mesos is invalid
+   *
+   * NOTE: As this method can be used synchronously by actors
+   * it is essential that it does not block. Specifically, calling blocking
+   * libprocess functions from this method can cause deadlock!
    */
-  virtual Try<bool> approved(
-      const Option<Object>& object) const noexcept = 0;
+  virtual Try<bool> approved(const Option<Object>& object) const noexcept = 0;
 
   virtual ~ObjectApprover() = default;
 };
@@ -287,8 +293,15 @@ public:
       const authorization::Request& request) = 0;
 
   /**
-   * Creates an `ObjectApprover` which can synchronously check authorization on
+   * Returns an `ObjectApprover` which can synchronously check authorization on
    * an object.
+   *
+   * The returned `ObjectApprover` is valid throuhout its whole
+   * lifetime or the lifetime of the authorizer, whichever is smaller.
+   *
+   * Calls to `approved(...)` method can return different values depending
+   * on the internal state maintained by the authorizer (which can change
+   * due to the need to keep `ObjectApprover` up-to-date).
    *
    * @param subject `authorization::Subject` subject for which the
    *     `ObjectApprover` should be created.
@@ -298,7 +311,8 @@ public:
    *
    * @return An `ObjectApprover` for the given `subject` and `action`.
    */
-  virtual process::Future<process::Owned<ObjectApprover>> getObjectApprover(
+  virtual process::Future<std::shared_ptr<const ObjectApprover>>
+  getApprover(
       const Option<authorization::Subject>& subject,
       const authorization::Action& action) = 0;
 

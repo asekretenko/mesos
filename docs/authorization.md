@@ -911,7 +911,7 @@ backwards compatibility when adding new fields (see
 Third, the `ObjectApprover` interface. In order to support efficient
 authorization of large objects and multiple objects a user can request an
 `ObjectApprover` via
-`Future<Owned<ObjectApprover>> getObjectApprover(const authorization::Subject& subject, const authorization::Action& action)`.
+`Future<shared_ptr<const ObjectApprover>> getApprover(const authorization::Subject& subject, const authorization::Action& action)`.
 The resulting `ObjectApprover` provides
 `Try<bool> approved(const ObjectApprover::Object& object)` to synchronously
 check whether objects are authorized. The `ObjectApprover::Object` follows the
