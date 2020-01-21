@@ -19,6 +19,13 @@
 #include "common/heartbeater.hpp"
 #include "common/protobuf_utils.hpp"
 
+using process::Failure;
+using process::Future;
+using process::Owned;
+using process::http::authentication::Principal;
+
+using mesos::authorization::ActionObject;
+
 namespace mesos {
 namespace internal {
 namespace master {
@@ -28,8 +35,9 @@ Framework::Framework(
     const Flags& masterFlags,
     const FrameworkInfo& info,
     const process::UPID& pid,
+    const Owned<ObjectApprovers>& objectApprovers_,
     const process::Time& time)
-  : Framework(master, masterFlags, info, ACTIVE, time)
+  : Framework(master, masterFlags, info, ACTIVE, objectApprovers_, time)
 {
   pid_ = pid;
 }
@@ -40,8 +48,9 @@ Framework::Framework(
     const Flags& masterFlags,
     const FrameworkInfo& info,
     const StreamingHttpConnection<v1::scheduler::Event>& http,
+    const Owned<ObjectApprovers>& objectApprovers_,
     const process::Time& time)
-  : Framework(master, masterFlags, info, ACTIVE, time)
+  : Framework(master, masterFlags, info, ACTIVE, objectApprovers_, time)
 {
   http_ = http;
 }
@@ -51,7 +60,7 @@ Framework::Framework(
     Master* const master,
     const Flags& masterFlags,
     const FrameworkInfo& info)
-  : Framework(master, masterFlags, info, RECOVERED, process::Time())
+  : Framework(master, masterFlags, info, RECOVERED, nullptr, process::Time())
 {}
 
 
@@ -60,6 +69,7 @@ Framework::Framework(
     const Flags& masterFlags,
     const FrameworkInfo& _info,
     State state,
+    const Owned<ObjectApprovers>& objectApprovers_,
     const process::Time& time)
   : master(_master),
     info(_info),
@@ -70,7 +80,8 @@ Framework::Framework(
     completedTasks(masterFlags.max_completed_tasks_per_framework),
     unreachableTasks(masterFlags.max_unreachable_tasks_per_framework),
     metrics(_info, masterFlags.publish_per_framework_metrics),
-    state(state)
+    state(state),
+    objectApprovers(objectApprovers_)
 {
   CHECK(_info.has_id());
 
@@ -557,7 +568,9 @@ void Framework::update(const FrameworkInfo& newInfo)
 }
 
 
-void Framework::reactivate(const process::UPID& newPid)
+void Framework::reactivate(
+    const process::UPID& newPid,
+    const Owned<ObjectApprovers>& objectApprovers_)
 {
   // Cleanup the old connection state if exists.
   tryDisconnect();
@@ -565,12 +578,14 @@ void Framework::reactivate(const process::UPID& newPid)
 
   // TODO(benh): unlink(oldPid);
   pid_ = newPid;
+  objectApprovers = objectApprovers_;
   setState(State::ACTIVE);
 }
 
 
 void Framework::reactivate(
-    const StreamingHttpConnection<v1::scheduler::Event>& newHttp)
+    const StreamingHttpConnection<v1::scheduler::Event>& newHttp,
+    const Owned<ObjectApprovers>& objectApprovers_)
 {
   // Note that master creates a new HTTP connection for every
   // subscribe request, so 'newHttp' should always be different
@@ -585,6 +600,7 @@ void Framework::reactivate(
 
   CHECK_NONE(http_);
   http_ = newHttp;
+  objectApprovers = objectApprovers_;
   setState(State::ACTIVE);
 }
 
@@ -613,6 +629,12 @@ bool Framework::tryDisconnect()
 
   http_ = None();
   heartbeater.reset();
+
+  // `ObjectApprover`s are kept up-to-date by authorizer, which potentially
+  // entails continious interaction with an external IAM. Hence, we do not
+  // want to keep them alive if there is no subscribed scheduler.
+  objectApprovers.reset();
+
   setState(State::DISCONNECTED);
   return true;
 }
@@ -695,6 +717,36 @@ void Framework::setState(Framework::State _state)
   state = _state;
   metrics.subscribed = state == Framework::State::ACTIVE ? 1 : 0;
 }
+
+
+Try<bool> Framework::approved(const ActionObject& actionObject) const
+{
+  CHECK(objectApprovers.get() != nullptr)
+    << "bug: Framework has no ObjectApprovers"
+    << " (attempt to call approved() for a disconnected framework?)";
+
+  return objectApprovers->approved(
+      actionObject.action(),
+      actionObject.object().getOrElse(authorization::Object()));
+}
+
+
+constexpr std::initializer_list<authorization::Action> SCHEDULER_API_ACTIONS{
+  authorization::REGISTER_FRAMEWORK};
+
+
+Future<Owned<ObjectApprovers>> Framework::createObjectApprovers(
+    const Option<Authorizer*>& authorizer,
+    const FrameworkInfo& frameworkInfo)
+{
+  return ObjectApprovers::create(
+      authorizer,
+      frameworkInfo.has_principal()
+        ? Option<Principal>(frameworkInfo.principal())
+        : Option<Principal>::none(),
+      SCHEDULER_API_ACTIONS);
+}
+
 
 } // namespace master {
 } // namespace internal {
