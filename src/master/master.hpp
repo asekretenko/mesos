@@ -2525,16 +2525,20 @@ struct Framework
   // 'webui_url', 'capabilities', and 'labels'.
   void update(const FrameworkInfo& newInfo);
 
-  void updateConnection(const process::UPID& newPid);
+  // Reactivate framework with new connection: update connection-related state
+  // and mark the framework as ACTIVE, regardless of the previous state.
+  void reactivate(const process::UPID& newPid);
+  void reactivate(const StreamingHttpConnection<v1::scheduler::Event>& newHttp);
 
-  void updateConnection(
-      const StreamingHttpConnection<v1::scheduler::Event>& newHttp);
+  // If the framework is ACTIVE, mark it INACTIVE and return `true`.
+  // Otherwise, return `false`.
+  bool tryDeactivate();
 
-  // Closes the HTTP connection and stops the heartbeat.
-  //
-  // TODO(vinod): Currently `state` variable is set separately
-  // from this method. We need to make sure these are in sync.
-  void closeHttpConnection();
+  // If the framework is ACTIVE or INACTIVE, clear all state associated with
+  // the scheduler being connected (close http connection, stop heartbeater,
+  // etc.), mark the framework DISCONNECTED and return `true`.
+  // Otherwise, return `false`.
+  bool tryDisconnect();
 
   void heartbeat();
 
@@ -2545,8 +2549,6 @@ struct Framework
   bool isTrackedUnderRole(const std::string& role) const;
   void trackUnderRole(const std::string& role);
   void untrackUnderRole(const std::string& role);
-
-  void setFrameworkState(const State& _state);
 
   const Option<StreamingHttpConnection<v1::scheduler::Event>>& http() const
   {
@@ -2562,8 +2564,6 @@ struct Framework
   std::set<std::string> roles;
 
   protobuf::framework::Capabilities capabilities;
-
-  State state;
 
   process::Time registeredTime;
   process::Time reregisteredTime;
@@ -2652,6 +2652,14 @@ private:
 
   Framework(const Framework&);              // No copying.
   Framework& operator=(const Framework&); // No assigning.
+
+  // To keep `metrics.subscribed` correct, `state` should never modified
+  // by means other than `setState()`.
+  //
+  // TODO(asekretenko): Encapsulate `state` to enforce this.
+  State state;
+
+  void setState(State state_);
 
   // Frameworks can either be connected via HTTP or by message passing
   // (scheduler driver). At most one of `http` and `pid` will be set

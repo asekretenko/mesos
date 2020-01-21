@@ -3134,7 +3134,7 @@ void Master::_subscribe(
       // NOTE: We do this after recovering resources (above) so that
       // the allocator has the correct view of the framework's share.
       if (!framework->active()) {
-        framework->setFrameworkState(Framework::State::ACTIVE);
+        framework->reactivate(framework->pid().get());
         allocator->activateFramework(framework->id());
       }
 
@@ -3310,26 +3310,23 @@ void Master::disconnect(Framework* framework)
 
   LOG(INFO) << "Disconnecting framework " << *framework;
 
-  framework->setFrameworkState(Framework::State::DISCONNECTED);
-
   if (framework->pid().isSome()) {
     // Remove the framework from authenticated. This is safe because
     // a framework will always reauthenticate before (re-)registering.
     authenticated.erase(framework->pid().get());
-  } else {
-    framework->closeHttpConnection();
   }
+
+  CHECK(framework->tryDisconnect());
 }
 
 
 void Master::deactivate(Framework* framework, bool rescind)
 {
   CHECK_NOTNULL(framework);
-  CHECK(framework->active());
 
   LOG(INFO) << "Deactivating framework " << *framework;
 
-  framework->setFrameworkState(Framework::State::INACTIVE);
+  CHECK(framework->tryDeactivate());
 
   // Tell the allocator to stop allocating resources to this framework.
   allocator->deactivateFramework(framework->id());
@@ -10569,18 +10566,17 @@ void Master::activateRecoveredFramework(
   framework->registeredTime = Clock::now();
   framework->reregisteredTime = Clock::now();
 
-  // Update the framework's connection state.
+  // Update the framework's connection state and mark it as ACTIVE
   if (pid.isSome()) {
-    framework->updateConnection(pid.get());
+    framework->reactivate(pid.get());
     link(pid.get());
   } else {
-    framework->updateConnection(http.get());
+    framework->reactivate(http.get());
     http->closed()
       .onAny(defer(self(), &Self::exited, framework->id(), http.get()));
   }
 
-  // Activate the framework.
-  framework->setFrameworkState(Framework::State::ACTIVE);
+  // The framework should be separately activated in the allocator.
   allocator->activateFramework(framework->id());
 
   // Export framework metrics if a principal is specified in `FrameworkInfo`.
@@ -10648,7 +10644,7 @@ void Master::failoverFramework(
     frameworks.principals.erase(framework->pid().get());
   }
 
-  framework->updateConnection(http);
+  framework->reactivate(http);
 
   http.closed()
     .onAny(defer(self(), &Self::exited, framework->id(), http));
@@ -10684,7 +10680,7 @@ void Master::failoverFramework(Framework* framework, const UPID& newPid)
     framework->send(message);
   }
 
-  framework->updateConnection(newPid);
+  framework->reactivate(newPid);
   link(newPid);
 
   _failoverFramework(framework);
@@ -10703,6 +10699,10 @@ void Master::failoverFramework(Framework* framework, const UPID& newPid)
 
 void Master::_failoverFramework(Framework* framework)
 {
+  // The framework should have been activated immediately before
+  // calling this method.
+  CHECK(framework->active());
+
   // Discard the framework's offers, if they weren't removed before.
   foreach (Offer* offer, utils::copy(framework->offers)) {
     discardOffer(offer);
@@ -10721,15 +10721,10 @@ void Master::_failoverFramework(Framework* framework)
     removeInverseOffer(inverseOffer);
   }
 
-  CHECK(!framework->recovered());
-
-  // Reactivate the framework, if needed.
+  // Reactivate the framework in the allocator.
   // NOTE: We do this after recovering resources (above) so that
   // the allocator has the correct view of the framework's share.
-  if (!framework->active()) {
-    framework->setFrameworkState(Framework::State::ACTIVE);
-    allocator->activateFramework(framework->id());
-  }
+  allocator->activateFramework(framework->id());
 
   // The scheduler driver safely ignores any duplicate registration
   // messages, so we don't need to compare the old and new pids here.
@@ -10902,9 +10897,9 @@ void Master::removeFramework(Framework* framework)
 
   // TODO(benh): unlink(framework->pid);
 
-  if (framework->http().isSome()) {
-    framework->closeHttpConnection();
-  }
+  // Clear connection-associated state of Framework (close HTTP connection,
+  // etc.)
+  framework->tryDisconnect();
 
   framework->unregisteredTime = Clock::now();
 
