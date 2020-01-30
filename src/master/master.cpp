@@ -1178,10 +1178,6 @@ void Master::finalize()
       removeInverseOffer(inverseOffer);
     }
 
-    // Remove pending tasks from the slave. Don't bother
-    // recovering the resources in the allocator.
-    slave->pendingTasks.clear();
-
     // Terminate the slave observer.
     terminate(slave->observer);
     wait(slave->observer);
@@ -1197,10 +1193,6 @@ void Master::finalize()
   // we are shutting down.
   foreachvalue (Framework* framework, frameworks.registered) {
     allocator->removeFramework(framework->id());
-
-    // Remove pending tasks from the framework. Don't bother
-    // recovering the resources in the allocator.
-    framework->pendingTasks.clear();
 
     // No tasks/executors/offers should remain since the slaves
     // have been removed.
@@ -4277,46 +4269,6 @@ void Master::accept(
   LOG(INFO) << "Processing ACCEPT call for offers: " << accept.offer_ids()
             << " on agent " << *slave << " for framework " << *framework;
 
-  auto getOperationTasks =
-    [](const Offer::Operation& operation) -> const RepeatedPtrField<TaskInfo>& {
-    if (operation.type() == Offer::Operation::LAUNCH) {
-      return operation.launch().task_infos();
-    }
-
-    if (operation.type() == Offer::Operation::LAUNCH_GROUP) {
-      return operation.launch_group().task_group().tasks();
-    }
-
-    UNREACHABLE();
-  };
-
-  // Add tasks to be launched to the framework's list of pending tasks
-  // before authorizing.
-  //
-  // NOTE: If two tasks have the same ID, the second one will
-  // not be put into 'framework->pendingTasks', therefore
-  // will not be launched (and TASK_ERROR will be sent).
-  // Unfortunately, we can't tell the difference between a
-  // duplicate TaskID and getting killed while pending
-  // (removed from the map). So it's possible that we send
-  // a TASK_ERROR after a TASK_KILLED (see _accept())!
-  for (const Offer::Operation& operation : accept.operations()) {
-    if (operation.type() == Offer::Operation::LAUNCH ||
-        operation.type() == Offer::Operation::LAUNCH_GROUP) {
-      for (const TaskInfo& task : getOperationTasks(operation)) {
-        if (!framework->pendingTasks.contains(task.task_id())) {
-          framework->pendingTasks[task.task_id()] = task;
-        }
-
-        // Add to the slave's list of pending tasks.
-        if (!slave->pendingTasks.contains(framework->id()) ||
-            !slave->pendingTasks[framework->id()].contains(task.task_id())) {
-          slave->pendingTasks[framework->id()][task.task_id()] = task;
-        }
-      }
-    }
-  }
-
   // TODO(asekretenko): Dismantle `_accept` and process operations one-by-one.
   _accept(framework->id(), slaveId, std::move(accept));
 }
@@ -4375,15 +4327,6 @@ void Master::_accept(
       }();
 
       foreach (const TaskInfo& task, tasks) {
-        // Remove the task from being pending.
-        framework->pendingTasks.erase(task.task_id());
-        if (slave != nullptr) {
-          slave->pendingTasks[framework->id()].erase(task.task_id());
-          if (slave->pendingTasks[framework->id()].empty()) {
-            slave->pendingTasks.erase(framework->id());
-          }
-        }
-
         const TaskStatus::Reason reason =
             slave == nullptr ? TaskStatus::REASON_SLAVE_REMOVED
                              : TaskStatus::REASON_SLAVE_DISCONNECTED;
@@ -4665,8 +4608,7 @@ void Master::_accept(
         Option<Error> error = validation::operation::validate(
             operation.destroy(),
             slave->checkpointedResources,
-            slave->usedResources,
-            slave->pendingTasks);
+            slave->usedResources);
 
         error = error.isSome()
           ? error
@@ -4845,29 +4787,6 @@ void Master::_accept(
 
       case Offer::Operation::LAUNCH: {
         foreach (const TaskInfo& task, operation.launch().task_infos()) {
-          // The task will not be in `pendingTasks` if it has been
-          // killed in the interim. No need to send TASK_KILLED in
-          // this case as it has already been sent. Note however that
-          // we cannot currently distinguish between the task being
-          // killed and the task having a duplicate TaskID within
-          // `pendingTasks`. Therefore we must still validate the task
-          // to ensure we send the TASK_ERROR in the case that it has a
-          // duplicate TaskID.
-          //
-          // TODO(bmahler): We may send TASK_ERROR after a TASK_KILLED
-          // if a task was killed (removed from `pendingTasks`) *and*
-          // the task is invalid or unauthorized here.
-          //
-          // TODO(asekretenko): Now that ACCEPT is authorized synchronously,
-          // master state cannot change while the task is being authorized,
-          // and all the code for tracking pending tasks can be removed.
-          bool pending = framework->pendingTasks.contains(task.task_id());
-          framework->pendingTasks.erase(task.task_id());
-          slave->pendingTasks[framework->id()].erase(task.task_id());
-          if (slave->pendingTasks[framework->id()].empty()) {
-            slave->pendingTasks.erase(framework->id());
-          }
-
           const Option<Error> authorizationError =
             authorized(ActionObject::taskLaunch(task, framework->info));
 
@@ -4932,7 +4851,7 @@ void Master::_accept(
           }
 
           // Add task.
-          if (pending) {
+          {
             Resources consumed;
 
             bool launchExecutor = true;
@@ -5045,25 +4964,8 @@ void Master::_accept(
       case Offer::Operation::LAUNCH_GROUP: {
         // We must ensure that the entire group can be launched. This
         // means all tasks in the group must be authorized and valid.
-        // If any tasks in the group have been killed in the interim
-        // we must kill the entire group.
         const ExecutorInfo& executor = operation.launch_group().executor();
         const TaskGroupInfo& taskGroup = operation.launch_group().task_group();
-
-        // Remove all the tasks from being pending.
-        hashset<TaskID> killed;
-        foreach (const TaskInfo& task, taskGroup.tasks()) {
-          bool pending = framework->pendingTasks.contains(task.task_id());
-          framework->pendingTasks.erase(task.task_id());
-          slave->pendingTasks[framework->id()].erase(task.task_id());
-          if (slave->pendingTasks[framework->id()].empty()) {
-            slave->pendingTasks.erase(framework->id());
-          }
-
-          if (!pending) {
-            killed.insert(task.task_id());
-          }
-        }
 
         // Note that we do not fill in the `ExecutorInfo.framework_id`
         // since we do not have to support backwards compatibility like
@@ -5119,10 +5021,6 @@ void Master::_accept(
 
         if (error.isSome()) {
           CHECK_SOME(reason);
-
-          // NOTE: If some of these invalid or unauthorized tasks were
-          // killed already, here we end up sending a TASK_ERROR after
-          // having already sent TASK_KILLED.
           foreach (const TaskInfo& task, taskGroup.tasks()) {
             const StatusUpdate& update = protobuf::createStatusUpdate(
                 framework->id(),
@@ -5140,39 +5038,6 @@ void Master::_accept(
                 TASK_ERROR, TaskStatus::SOURCE_MASTER, reason.get());
 
             forward(update, UPID(), framework);
-          }
-
-          continue;
-        }
-
-        // If task(s) were killed, send TASK_KILLED for
-        // all of the remaining tasks, since a TaskGroup must
-        // be delivered in its entirety.
-        //
-        // TODO(bmahler): Do this killing when processing
-        // the `Kill` call, rather than doing it here.
-        if (!killed.empty()) {
-          foreach (const TaskInfo& task, taskGroup.tasks()) {
-            if (!killed.contains(task.task_id())) {
-              const StatusUpdate& update = protobuf::createStatusUpdate(
-                  framework->id(),
-                  task.slave_id(),
-                  task.task_id(),
-                  TASK_KILLED,
-                  TaskStatus::SOURCE_MASTER,
-                  None(),
-                  "A task within the task group was killed before"
-                  " delivery to the agent",
-                  TaskStatus::REASON_TASK_KILLED_DURING_LAUNCH);
-
-              metrics->tasks_killed++;
-
-              // TODO(bmahler): Increment the task state source metric,
-              // we currently cannot because it requires each source
-              // requires a reason.
-
-              forward(update, UPID(), framework);
-            }
           }
 
           continue;
@@ -5567,12 +5432,10 @@ void Master::checkAndTransitionDrainingAgent(Slave* slave)
   }
 
   // Check if the agent has any tasks running or operations pending.
-  if (!slave->pendingTasks.empty() ||
-      !slave->tasks.empty() ||
+  if (!slave->tasks.empty() ||
       !slave->operations.empty()) {
     VLOG(1)
       << "DRAINING Agent " << slaveId << " has "
-      << slave->pendingTasks.size() << " pending tasks, "
       << slave->tasks.size() << " tasks, and "
       << slave->operations.size() << " operations";
     return;
@@ -5749,36 +5612,6 @@ void Master::kill(Framework* framework, const scheduler::Call::Kill& kill)
             << " of framework " << *framework;
 
   ++metrics->messages_kill_task;
-
-  if (framework->pendingTasks.contains(taskId)) {
-    // Remove from pending tasks.
-    framework->pendingTasks.erase(taskId);
-
-    if (slaveId.isSome()) {
-      Slave* slave = slaves.registered.get(slaveId.get());
-
-      if (slave != nullptr) {
-        slave->pendingTasks[framework->id()].erase(taskId);
-        if (slave->pendingTasks[framework->id()].empty()) {
-          slave->pendingTasks.erase(framework->id());
-        }
-      }
-    }
-
-    const StatusUpdate& update = protobuf::createStatusUpdate(
-        framework->id(),
-        slaveId,
-        taskId,
-        TASK_KILLED,
-        TaskStatus::SOURCE_MASTER,
-        None(),
-        "Killed before delivery to the agent",
-        TaskStatus::REASON_TASK_KILLED_DURING_LAUNCH);
-
-    forward(update, UPID(), framework);
-
-    return;
-  }
 
   Task* task = framework->getTask(taskId);
   if (task == nullptr) {
@@ -9026,29 +8859,6 @@ void Master::reconcile(
     LOG(INFO) << "Performing implicit task state reconciliation"
                  " for framework " << *framework;
 
-    foreachvalue (const TaskInfo& task, framework->pendingTasks) {
-      StatusUpdate update = protobuf::createStatusUpdate(
-          framework->id(),
-          task.slave_id(),
-          task.task_id(),
-          TASK_STAGING,
-          TaskStatus::SOURCE_MASTER,
-          None(),
-          "Reconciliation: Latest task state",
-          TaskStatus::REASON_RECONCILIATION);
-
-      VLOG(1) << "Sending implicit reconciliation state "
-              << update.status().state()
-              << " for task " << update.status().task_id()
-              << " of framework " << *framework;
-
-      // TODO(bmahler): Consider using forward(); might lead to too
-      // much logging.
-      StatusUpdateMessage message;
-      *message.mutable_update() = std::move(update);
-      framework->send(message);
-    }
-
     foreachvalue (Task* task, framework->tasks) {
       const TaskState& state = task->has_status_update_state()
           ? task->status_update_state()
@@ -9094,7 +8904,6 @@ void Master::reconcile(
             << " of framework " << *framework;
 
   // Explicit reconciliation occurs for the following cases:
-  //   (1) Task is known, but pending: TASK_STAGING.
   //   (2) Task is known: send the latest state.
   //   (3) Task is unknown, slave is recovered: no-op.
   //   (4) Task is unknown, slave is registered: TASK_GONE.
@@ -9118,19 +8927,7 @@ void Master::reconcile(
     Option<StatusUpdate> update = None();
     Task* task = framework->getTask(t.task_id());
 
-    if (framework->pendingTasks.contains(t.task_id())) {
-      // (1) Task is known, but pending: TASK_STAGING.
-      const TaskInfo& task_ = framework->pendingTasks[t.task_id()];
-      update = protobuf::createStatusUpdate(
-          framework->id(),
-          task_.slave_id(),
-          task_.task_id(),
-          TASK_STAGING,
-          TaskStatus::SOURCE_MASTER,
-          None(),
-          "Reconciliation: Latest task state",
-          TaskStatus::REASON_RECONCILIATION);
-    } else if (task != nullptr) {
+    if (task != nullptr) {
       // (2) Task is known: send the latest status update state.
       const TaskState& state = task->has_status_update_state()
           ? task->status_update_state()
@@ -10492,17 +10289,11 @@ void Master::removeFramework(Framework* framework)
   CHECK(framework->inverseOffers.empty());
 
   foreachvalue (Slave* slave, slaves.registered) {
-    // Remove the pending tasks from the slave.
-    slave->pendingTasks.erase(framework->id());
-
     // Tell slaves to shutdown the framework.
     ShutdownFrameworkMessage message;
     message.mutable_framework_id()->MergeFrom(framework->id());
     send(slave->pid, message);
   }
-
-  // Remove the pending tasks from the framework.
-  framework->pendingTasks.clear();
 
   // Remove pointers to the framework's tasks in slaves and mark those
   // tasks as completed.
@@ -11028,9 +10819,6 @@ void Master::_removeSlave(
       removeOperation(operation);
     }
   }
-
-  // Remove the pending tasks from the slave.
-  slave->pendingTasks.clear();
 
   // Mark the slave as being removed.
   slaves.registered.remove(slave);
@@ -12245,11 +12033,6 @@ double Master::_frameworks_inactive()
 double Master::_tasks_staging()
 {
   double count = 0.0;
-
-  // Add the tasks pending validation / authorization.
-  foreachvalue (Framework* framework, frameworks.registered) {
-    count += framework->pendingTasks.size();
-  }
 
   foreachvalue (Slave* slave, slaves.registered) {
     typedef hashmap<TaskID, Task*> TaskMap;

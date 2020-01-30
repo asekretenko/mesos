@@ -1029,8 +1029,7 @@ Future<Response> Master::Http::_destroyVolumes(
   error = validation::operation::validate(
       operation.destroy(),
       slave->checkpointedResources,
-      slave->usedResources,
-      slave->pendingTasks);
+      slave->usedResources);
 
   if (error.isSome()) {
     return BadRequest("Invalid DESTROY operation: " + error->message);
@@ -3115,17 +3114,6 @@ mesos::master::Response::GetTasks Master::Http::_getTasks(
 
   vector<const Task*> tasks;
   foreach (const Framework* framework, frameworks) {
-    // Pending tasks.
-    foreachvalue (const TaskInfo& taskInfo, framework->pendingTasks) {
-      // Skip unauthorized tasks.
-      if (!approvers->approved<VIEW_TASK>(taskInfo, framework->info)) {
-        continue;
-      }
-
-      *getTasks.add_pending_tasks() =
-        protobuf::createTask(taskInfo, TASK_STAGING, framework->id());
-    }
-
     // Active tasks.
     foreachvalue (Task* task, framework->tasks) {
       CHECK_NOTNULL(task);
