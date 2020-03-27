@@ -964,10 +964,8 @@ if (WIN32)
   if (CMAKE_GENERATOR MATCHES "Visual Studio")
     set_target_properties(
       xz PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${XZ_ROOT}-build/Debug/lzma${XZ_SHARED}${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${XZ_ROOT}-build/Release/lzma${XZ_SHARED}${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_DEBUG ${XZ_ROOT}-build/Debug/lzma${CMAKE_IMPORT_LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_RELEASE ${XZ_ROOT}-build/Release/lzma${CMAKE_IMPORT_LIBRARY_SUFFIX})
+      IMPORTED_LOCATION_DEBUG ${XZ_ROOT}-build/Debug/lzma${XZ_SHARED}${CMAKE_STATIC_LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${XZ_ROOT}-build/Release/lzma${XZ_SHARED}${CMAKE_STATIC_LIBRARY_SUFFIX})
   else ()
     set_target_properties(
       xz PROPERTIES
@@ -982,7 +980,8 @@ if (WIN32)
   set(XZ_CMAKE_ARGS
     ${CMAKE_FORWARD_ARGS}
     ${CMAKE_C_FORWARD_ARGS}
-    -DXZ_INSTALL_DIR=${XZ_ROOT}-lib)
+    -DXZ_INSTALL_DIR=${XZ_ROOT}-lib
+    -DBUILD_SHARED_LIBS=false)
 
   ExternalProject_Add(
     ${XZ_TARGET}
