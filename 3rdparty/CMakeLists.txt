@@ -1107,7 +1107,7 @@ if (NOT UNBUNDLED_LIBARCHIVE)
       INTERFACE_COMPILE_DEFINITIONS LIBARCHIVE_STATIC
       # NOTE: The install step avoids the need for separate DEBUG and
       # RELEASE paths.
-      IMPORTED_LOCATION ${LIBARCHIVE_ROOT}-build/lib/archive_static${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION ${LIBARCHIVE_ROOT}-build/lib/archive_static${CMAKE_STATIC_LIBRARY_SUFFIX}
       INTERFACE_INCLUDE_DIRECTORIES ${LIBARCHIVE_ROOT}-build/include
       INTERFACE_LINK_LIBRARIES "bzip2;xz;zlib")
     set(LIBARCHIVE_DEPENDS bzip2 xz zlib)
