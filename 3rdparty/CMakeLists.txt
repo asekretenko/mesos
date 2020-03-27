@@ -253,8 +253,8 @@ if (WIN32)
   if (CMAKE_GENERATOR MATCHES "Visual Studio")
     set_target_properties(
       sasl2 PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${SASL2_ROOT}-build/Debug/libsasl2${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${SASL2_ROOT}-build/Release/libsasl2${LIBRARY_SUFFIX})
+      IMPORTED_LOCATION_DEBUG ${SASL2_ROOT}-build/Debug/libsasl2${CMAKE_STATIC_LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${SASL2_ROOT}-build/Release/libsasl2${CMAKE_STATIC_LIBRARY_SUFFIX})
   else ()
     set_target_properties(
       sasl2 PROPERTIES
@@ -815,7 +815,7 @@ if (WIN32)
       libcurl PROPERTIES
       IMPORTED_LOCATION_DEBUG ${CURL_ROOT}-build/lib/Debug/libcurl-d${LIBRARY_SUFFIX}
       IMPORTED_LOCATION_RELEASE ${CURL_ROOT}-build/lib/Release/libcurl${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_DEBUG ${CURL_ROOT}-build/lib/Debug/libcurl_imp${CMAKE_IMPORT_LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_DEBUG ${CURL_ROOT}-build/lib/Debug/libcurl-d_imp${CMAKE_IMPORT_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB_RELEASE ${CURL_ROOT}-build/lib/Release/libcurl_imp${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
     set_target_properties(
@@ -907,7 +907,7 @@ endif ()
 ########################################
 if (WIN32)
   EXTERNAL(bzip2 ${BZIP2_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
-  add_library(bzip2 STATIC IMPORTED)
+  add_library(bzip2 ${LIBRARY_LINKAGE} IMPORTED)
   add_dependencies(bzip2 ${BZIP2_TARGET})
 
   set_target_properties(
@@ -953,6 +953,7 @@ endif ()
 ########################################################################
 if (WIN32)
   EXTERNAL(xz ${XZ_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
+
   add_library(xz STATIC IMPORTED)
   add_dependencies(xz ${XZ_TARGET})
 
@@ -964,10 +965,10 @@ if (WIN32)
   if (CMAKE_GENERATOR MATCHES "Visual Studio")
     set_target_properties(
       xz PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${XZ_ROOT}-build/Debug/lzma${XZ_SHARED}${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${XZ_ROOT}-build/Release/lzma${XZ_SHARED}${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_DEBUG ${XZ_ROOT}-build/Debug/lzma${CMAKE_IMPORT_LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_RELEASE ${XZ_ROOT}-build/Release/lzma${CMAKE_IMPORT_LIBRARY_SUFFIX})
+      IMPORTED_LOCATION_DEBUG ${XZ_ROOT}-build/Debug/lzma${XZ_SHARED}${CMAKE_STATIC_LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${XZ_ROOT}-build/Release/lzma${XZ_SHARED}${CMAKE_STATIC_LIBRARY_SUFFIX})
+      #IMPORTED_IMPLIB_DEBUG ${XZ_ROOT}-build/Debug/xz-5.2.3${CMAKE_IMPORT_LIBRARY_SUFFIX}
+      #IMPORTED_IMPLIB_RELEASE ${XZ_ROOT}-build/Release/xz-5.2.3${CMAKE_IMPORT_LIBRARY_SUFFIX})
   else ()
     set_target_properties(
       xz PROPERTIES
@@ -982,7 +983,8 @@ if (WIN32)
   set(XZ_CMAKE_ARGS
     ${CMAKE_FORWARD_ARGS}
     ${CMAKE_C_FORWARD_ARGS}
-    -DXZ_INSTALL_DIR=${XZ_ROOT}-lib)
+    -DXZ_INSTALL_DIR=${XZ_ROOT}-lib
+    -DBUILD_SHARED_LIBS=false)
 
   ExternalProject_Add(
     ${XZ_TARGET}
@@ -1009,8 +1011,10 @@ if (WIN32)
   #   * For a shared Release build: `zlib1.lib`.
   if (NOT BUILD_SHARED_LIBS)
     set(ZLIB_STATIC static)
+    set(ZLIB_LIBRARY_SUBDIR lib)
   else ()
     set(ZLIB_SHARED 1)
+    set(ZLIB_LIBRARY_SUBDIR bin)
   endif ()
 
   # NOTE: We install Zlib under `${ZLIB_ROOT}-lib` so CMake's `FindZLIB` module
@@ -1026,8 +1030,8 @@ if (WIN32)
   if (CMAKE_GENERATOR MATCHES "Visual Studio")
     set_target_properties(
       zlib PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}d${ZLIB_SHARED}${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}${ZLIB_SHARED}${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_DEBUG ${ZLIB_ROOT}-lib/${ZLIB_LIBRARY_SUBDIR}/zlib${ZLIB_STATIC}d${ZLIB_SHARED}${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${ZLIB_ROOT}-lib/${ZLIB_LIBRARY_SUBDIR}/zlib${ZLIB_STATIC}${ZLIB_SHARED}${LIBRARY_SUFFIX}
       IMPORTED_IMPLIB_DEBUG ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}d${CMAKE_IMPORT_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB_RELEASE ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}${CMAKE_IMPORT_LIBRARY_SUFFIX})
   else ()
@@ -1106,7 +1110,7 @@ if (NOT UNBUNDLED_LIBARCHIVE)
       INTERFACE_COMPILE_DEFINITIONS LIBARCHIVE_STATIC
       # NOTE: The install step avoids the need for separate DEBUG and
       # RELEASE paths.
-      IMPORTED_LOCATION ${LIBARCHIVE_ROOT}-build/lib/archive_static${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION ${LIBARCHIVE_ROOT}-build/lib/archive_static${CMAKE_STATIC_LIBRARY_SUFFIX}
       INTERFACE_INCLUDE_DIRECTORIES ${LIBARCHIVE_ROOT}-build/include
       INTERFACE_LINK_LIBRARIES "bzip2;xz;zlib")
     set(LIBARCHIVE_DEPENDS bzip2 xz zlib)
@@ -1115,8 +1119,8 @@ if (NOT UNBUNDLED_LIBARCHIVE)
     # links to. This is necessary because the zlib project
     # unconditionally builds both shared and static libraries, and we
     # need to be consistent about which is linked.
-    list(APPEND LIBARCHIVE_CMAKE_ARGS
-      -DZLIB_LIBRARY=$<TARGET_FILE:zlib>)
+    #list(APPEND LIBARCHIVE_CMAKE_ARGS
+    #  -DZLIB_LIBRARY=$<TARGET_FILE:zlib>)
   else ()
     list(APPEND LIBARCHIVE_CMAKE_ARGS
       -DENABLE_BZip2=OFF
@@ -1276,7 +1280,10 @@ if (WIN32)
     set_target_properties(
       protobuf PROPERTIES
       IMPORTED_LOCATION_DEBUG ${PROTOBUF_ROOT}-build/Debug/libprotobufd${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${PROTOBUF_ROOT}-build/Release/libprotobuf${LIBRARY_SUFFIX})
+      IMPORTED_LOCATION_RELEASE ${PROTOBUF_ROOT}-build/Release/libprotobuf${LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_DEBUG ${PROTOBUF_ROOT}-build/Debug/libprotobufd${CMAKE_IMPORT_LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_RELEASE ${PROTOBUF_ROOT}-build/Release/libprotobuf${CMAKE_IMPORT_LIBRARY_SUFFIX})
+
 
     set_target_properties(
       protoc PROPERTIES
