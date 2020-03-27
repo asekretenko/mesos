@@ -907,7 +907,7 @@ endif ()
 ########################################
 if (WIN32)
   EXTERNAL(bzip2 ${BZIP2_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
-  add_library(bzip2 STATIC IMPORTED)
+  add_library(bzip2 ${LIBRARY_LINKAGE} IMPORTED)
   add_dependencies(bzip2 ${BZIP2_TARGET})
 
   set_target_properties(
