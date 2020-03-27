@@ -1331,15 +1331,18 @@ ExternalProject_Add(
 #######################################################################
 EXTERNAL(grpc ${GRPC_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
 
-add_library(libgpr ${LIBRARY_LINKAGE} IMPORTED)
-add_dependencies(libgpr ${GRPC_TARGET})
+#add_library(libgpr ${LIBRARY_LINKAGE} IMPORTED)
+#add_dependencies(libgpr ${GRPC_TARGET})
+
 add_library(libgrpc ${LIBRARY_LINKAGE} IMPORTED)
 add_dependencies(libgrpc ${GRPC_TARGET})
 add_library(libgrpc++ ${LIBRARY_LINKAGE} IMPORTED)
 add_dependencies(libgrpc++ ${GRPC_TARGET})
 
 add_library(grpc INTERFACE)
-target_link_libraries(grpc INTERFACE libgrpc++ libgrpc libgpr)
+#target_link_libraries(grpc INTERFACE libgrpc++ libgrpc libgpr)
+target_link_libraries(grpc INTERFACE libgrpc++ libgrpc)
+
 
 # TODO(chhsiao): Move grpc so these don't have to be GLOBAL.
 add_executable(grpc_cpp_plugin IMPORTED GLOBAL)
@@ -1377,12 +1380,12 @@ if (WIN32)
   list(APPEND GRPC_CMAKE_ARGS -DZLIB_ROOT=${ZLIB_ROOT}-lib)
 
   if (CMAKE_GENERATOR MATCHES "Visual Studio")
-    set_target_properties(
-      libgpr PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/gpr${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/gpr${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_DEBUG ${GRPC_ROOT}-build/Debug/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_RELEASE ${GRPC_ROOT}-build/Release/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX})
+#    set_target_properties(
+#      libgpr PROPERTIES
+#      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/gpr${LIBRARY_SUFFIX}
+#      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/gpr${LIBRARY_SUFFIX}
+#      IMPORTED_IMPLIB_DEBUG ${GRPC_ROOT}-build/Debug/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX}
+#      IMPORTED_IMPLIB_RELEASE ${GRPC_ROOT}-build/Release/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
     set_target_properties(
       libgrpc PROPERTIES
@@ -1403,10 +1406,10 @@ if (WIN32)
       IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc_cpp_plugin.exe
       IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc_cpp_plugin.exe)
   else ()
-    set_target_properties(
-      libgpr PROPERTIES
-      IMPORTED_LOCATION ${GRPC_ROOT}-build/gpr${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB ${GRPC_ROOT}-build/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX})
+#    set_target_properties(
+#      libgpr PROPERTIES
+#      IMPORTED_LOCATION ${GRPC_ROOT}-build/gpr${LIBRARY_SUFFIX}
+#      IMPORTED_IMPLIB ${GRPC_ROOT}-build/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
     set_target_properties(
       libgrpc PROPERTIES
@@ -1423,9 +1426,9 @@ if (WIN32)
       IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc_cpp_plugin.exe)
   endif()
 else ()
-  set_target_properties(
-    libgpr PROPERTIES
-    IMPORTED_LOCATION ${GRPC_ROOT}-build/libgpr${LIBRARY_SUFFIX})
+#  set_target_properties(
+#    libgpr PROPERTIES
+#    IMPORTED_LOCATION ${GRPC_ROOT}-build/libgpr${LIBRARY_SUFFIX})
 
   set_target_properties(
     libgrpc PROPERTIES
@@ -1441,7 +1444,7 @@ else ()
 endif ()
 
 MAKE_INCLUDE_DIR(grpc)
-GET_BYPRODUCTS(libgpr)
+#GET_BYPRODUCTS(libgpr)
 GET_BYPRODUCTS(libgrpc)
 GET_BYPRODUCTS(libgrpc++)
 GET_BYPRODUCTS(grpc_cpp_plugin)
