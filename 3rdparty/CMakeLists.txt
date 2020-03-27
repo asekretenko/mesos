@@ -1333,11 +1333,17 @@ ExternalProject_Add(
 #######################################################################
 EXTERNAL(grpc ${GRPC_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
 
-add_library(libgpr ${LIBRARY_LINKAGE} IMPORTED)
+if (WIN32)
+  SET(GRPC_LIBRARY_LINKAGE STATIC)
+else()
+  SET(GRPC_LIBRARY_LINKAGE ${LIBRARY_LINKAGE})
+endif()
+
+add_library(libgpr ${GRPC_LIBRARY_LINKAGE} IMPORTED)
 add_dependencies(libgpr ${GRPC_TARGET})
-add_library(libgrpc ${LIBRARY_LINKAGE} IMPORTED)
+add_library(libgrpc ${GRPC_LIBRARY_LINKAGE} IMPORTED)
 add_dependencies(libgrpc ${GRPC_TARGET})
-add_library(libgrpc++ ${LIBRARY_LINKAGE} IMPORTED)
+add_library(libgrpc++ ${GRPC_LIBRARY_LINKAGE} IMPORTED)
 add_dependencies(libgrpc++ ${GRPC_TARGET})
 
 add_library(grpc INTERFACE)
@@ -1376,27 +1382,38 @@ set_target_properties(
 PATCH_CMD(GRPC_PATCH_CMD grpc-${GRPC_VERSION}.patch)
 
 if (WIN32)
-  list(APPEND GRPC_CMAKE_ARGS -DZLIB_ROOT=${ZLIB_ROOT}-lib)
+  # As for Apr 2020, on Windows building GRPC as a DLL is not supported. See
+  # discussion in https://github.com/grpc/grpc/issues/15333 for more details.
+  # Thus, under -DBUILD_SHARED_LIBS=true, GRPC is built into each target
+  # depending on it (libprocess, etc) as a static library.
+  #
+  # BEWARE: As a result, each of the dependent DLLs gets its own instance
+  # of whatever global state GRPC has!
+  list(APPEND GRPC_CMAKE_ARGS
+    -DZLIB_ROOT=${ZLIB_ROOT}-lib
+    -DBUILD_SHARED_LIBS=false)
+
+  SET(GRPC_LIBRARY_SUFFIX ${CMAKE_STATIC_LIBRARY_SUFFIX})
 
   if (CMAKE_GENERATOR MATCHES "Visual Studio")
     set_target_properties(
       libgpr PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/gpr${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/gpr${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/gpr${GRPC_LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/gpr${GRPC_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB_DEBUG ${GRPC_ROOT}-build/Debug/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB_RELEASE ${GRPC_ROOT}-build/Release/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
     set_target_properties(
       libgrpc PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc${GRPC_VARIANT}${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc${GRPC_VARIANT}${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc${GRPC_VARIANT}${GRPC_LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc${GRPC_VARIANT}${GRPC_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB_DEBUG ${GRPC_ROOT}-build/Debug/grpc${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB_RELEASE ${GRPC_ROOT}-build/Release/grpc${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
     set_target_properties(
       libgrpc++ PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc++${GRPC_VARIANT}${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc++${GRPC_VARIANT}${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc++${GRPC_VARIANT}${GRPC_LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc++${GRPC_VARIANT}${GRPC_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB_DEBUG ${GRPC_ROOT}-build/Debug/grpc++${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB_RELEASE ${GRPC_ROOT}-build/Release/grpc++${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
@@ -1407,17 +1424,17 @@ if (WIN32)
   else ()
     set_target_properties(
       libgpr PROPERTIES
-      IMPORTED_LOCATION ${GRPC_ROOT}-build/gpr${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION ${GRPC_ROOT}-build/gpr${GRPC_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB ${GRPC_ROOT}-build/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
     set_target_properties(
       libgrpc PROPERTIES
-      IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc${GRPC_VARIANT}${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc${GRPC_VARIANT}${GRPC_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB ${GRPC_ROOT}-build/grpc${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
     set_target_properties(
       libgrpc++ PROPERTIES
-      IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc++${GRPC_VARIANT}${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc++${GRPC_VARIANT}${GRPC_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB ${GRPC_ROOT}-build/grpc++${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
     set_target_properties(
