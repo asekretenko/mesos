@@ -1331,11 +1331,11 @@ ExternalProject_Add(
 #######################################################################
 EXTERNAL(grpc ${GRPC_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
 
-add_library(libgpr ${LIBRARY_LINKAGE} IMPORTED)
+add_library(libgpr STATIC IMPORTED)
 add_dependencies(libgpr ${GRPC_TARGET})
-add_library(libgrpc ${LIBRARY_LINKAGE} IMPORTED)
+add_library(libgrpc STATIC IMPORTED)
 add_dependencies(libgrpc ${GRPC_TARGET})
-add_library(libgrpc++ ${LIBRARY_LINKAGE} IMPORTED)
+add_library(libgrpc++ STATIC IMPORTED)
 add_dependencies(libgrpc++ ${GRPC_TARGET})
 
 add_library(grpc INTERFACE)
@@ -1351,7 +1351,8 @@ set(GRPC_CMAKE_ARGS
   -DCMAKE_PREFIX_PATH=${PROTOBUF_ROOT}-build
   -DgRPC_PROTOBUF_PROVIDER=package
   -DgRPC_PROTOBUF_PACKAGE_TYPE=CONFIG
-  -DgRPC_ZLIB_PROVIDER=package)
+  -DgRPC_ZLIB_PROVIDER=package
+  -DBUILD_SHARED_LIBS=false)
 
 if (ENABLE_SSL)
   set(GRPC_VARIANT "")
@@ -1379,22 +1380,22 @@ if (WIN32)
   if (CMAKE_GENERATOR MATCHES "Visual Studio")
     set_target_properties(
       libgpr PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/gpr${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/gpr${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/gpr${CMAKE_STATIC_LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/gpr${CMAKE_STATIC_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB_DEBUG ${GRPC_ROOT}-build/Debug/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB_RELEASE ${GRPC_ROOT}-build/Release/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
     set_target_properties(
       libgrpc PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc${GRPC_VARIANT}${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc${GRPC_VARIANT}${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc${GRPC_VARIANT}${CMAKE_STATIC_LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc${GRPC_VARIANT}${CMAKE_STATIC_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB_DEBUG ${GRPC_ROOT}-build/Debug/grpc${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB_RELEASE ${GRPC_ROOT}-build/Release/grpc${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
     set_target_properties(
       libgrpc++ PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc++${GRPC_VARIANT}${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc++${GRPC_VARIANT}${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc++${GRPC_VARIANT}${CMAKE_STATIC_LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc++${GRPC_VARIANT}${CMAKE_STATIC_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB_DEBUG ${GRPC_ROOT}-build/Debug/grpc++${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB_RELEASE ${GRPC_ROOT}-build/Release/grpc++${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
@@ -1405,17 +1406,17 @@ if (WIN32)
   else ()
     set_target_properties(
       libgpr PROPERTIES
-      IMPORTED_LOCATION ${GRPC_ROOT}-build/gpr${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION ${GRPC_ROOT}-build/gpr${CMAKE_STATIC_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB ${GRPC_ROOT}-build/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
     set_target_properties(
       libgrpc PROPERTIES
-      IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc${GRPC_VARIANT}${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc${GRPC_VARIANT}${CMAKE_STATIC_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB ${GRPC_ROOT}-build/grpc${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
     set_target_properties(
       libgrpc++ PROPERTIES
-      IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc++${GRPC_VARIANT}${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc++${GRPC_VARIANT}${CMAKE_STATIC_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB ${GRPC_ROOT}-build/grpc++${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
     set_target_properties(
@@ -1425,15 +1426,15 @@ if (WIN32)
 else ()
   set_target_properties(
     libgpr PROPERTIES
-    IMPORTED_LOCATION ${GRPC_ROOT}-build/libgpr${LIBRARY_SUFFIX})
+    IMPORTED_LOCATION ${GRPC_ROOT}-build/libgpr${CMAKE_STATIC_LIBRARY_SUFFIX})
 
   set_target_properties(
     libgrpc PROPERTIES
-    IMPORTED_LOCATION ${GRPC_ROOT}-build/libgrpc${GRPC_VARIANT}${LIBRARY_SUFFIX})
+    IMPORTED_LOCATION ${GRPC_ROOT}-build/libgrpc${GRPC_VARIANT}${CMAKE_STATIC_LIBRARY_SUFFIX})
 
   set_target_properties(
     libgrpc++ PROPERTIES
-    IMPORTED_LOCATION ${GRPC_ROOT}-build/libgrpc++${GRPC_VARIANT}${LIBRARY_SUFFIX})
+    IMPORTED_LOCATION ${GRPC_ROOT}-build/libgrpc++${GRPC_VARIANT}${CMAKE_STATIC_LIBRARY_SUFFIX})
 
   set_target_properties(
     grpc_cpp_plugin PROPERTIES
