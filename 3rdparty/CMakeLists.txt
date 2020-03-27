@@ -1277,7 +1277,9 @@ if (WIN32)
     set_target_properties(
       protobuf PROPERTIES
       IMPORTED_LOCATION_DEBUG ${PROTOBUF_ROOT}-build/Debug/libprotobufd${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${PROTOBUF_ROOT}-build/Release/libprotobuf${LIBRARY_SUFFIX})
+      IMPORTED_LOCATION_RELEASE ${PROTOBUF_ROOT}-build/Release/libprotobuf${LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_DEBUG ${PROTOBUF_ROOT}-build/Debug/libprotobufd${CMAKE_IMPORT_LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_RELEASE ${PROTOBUF_ROOT}-build/Release/libprotobuf${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
     set_target_properties(
       protoc PROPERTIES
