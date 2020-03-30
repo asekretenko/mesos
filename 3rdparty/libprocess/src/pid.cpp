@@ -152,6 +152,4 @@ istream& operator>>(istream& stream, UPID& pid)
   return stream;
 }
 
-const std::string UPID::ID::EMPTY = "";
-
 } // namespace process {

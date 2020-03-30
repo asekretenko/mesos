@@ -111,7 +111,7 @@ struct UPID
   // TODO(benh): Factor this out into a generic copy-on-write string.
   struct ID
   {
-    static const std::string EMPTY;
+    static std::string emptyID() {return ""; };
 
     ID() = default;
 
@@ -130,7 +130,7 @@ struct UPID
     bool operator==(const std::string& that) const
     {
       if (!id) {
-        return EMPTY == that;
+        return emptyID() == that;
       }
       return *id == that;
     }
@@ -138,7 +138,7 @@ struct UPID
     bool operator==(const char* that) const
     {
       if (!id) {
-        return EMPTY == that;
+        return emptyID() == that;
       }
       return *id == that;
     }
@@ -151,7 +151,7 @@ struct UPID
     bool operator<(const std::string& that) const
     {
       if (!id) {
-        return EMPTY < that;
+        return emptyID() < that;
       }
       return *id < that;
     }
@@ -159,6 +159,7 @@ struct UPID
     operator const std::string&() const
     {
       if (!id) {
+        static const std::string EMPTY = emptyID();
         return EMPTY;
       }
       return *id;
