@@ -85,8 +85,8 @@ private:
 };
 
 
-// Global metrics process. Defined in process.cpp.
-extern PID<MetricsProcess> metrics;
+// Returns PID of the global metrics process.
+PID<MetricsProcess> getMetricsProcess();
 
 }  // namespace internal {
 
@@ -100,7 +100,7 @@ Future<Nothing> add(const T& metric)
   // There is an explicit copy in this call to ensure we end up owning
   // the last copy of a Metric when we remove it.
   return dispatch(
-      internal::metrics,
+      internal::getMetricsProcess(),
       &internal::MetricsProcess::add,
       Owned<Metric>(new T(metric)));
 }
@@ -112,7 +112,7 @@ inline Future<Nothing> remove(const Metric& metric)
   process::initialize();
 
   return dispatch(
-      internal::metrics,
+      internal::getMetricsProcess(),
       &internal::MetricsProcess::remove,
       metric.name());
 }
@@ -125,7 +125,7 @@ inline Future<std::map<std::string, double>> snapshot(
   process::initialize();
 
   return dispatch(
-      internal::metrics,
+      internal::getMetricsProcess(),
       &internal::MetricsProcess::snapshot,
       timeout);
 }

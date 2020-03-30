@@ -543,7 +543,10 @@ thread_local Executor* _executor_ = nullptr;
 namespace metrics {
 namespace internal {
 
+// Global metrics process.
 PID<metrics::internal::MetricsProcess> metrics;
+
+PID<metrics::internal::MetricsProcess> getMetricsProcess() { return metrics; }
 
 } // namespace internal {
 } // namespace metrics {
