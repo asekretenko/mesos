@@ -704,9 +704,11 @@ inline bool wait(const ProcessBase* process, const Duration& duration)
   return process::wait(process->self(), duration); // Explicit to disambiguate.
 }
 
+/**
+ * Returns the process running in the current thread now.
+ */
+ProcessBase* getCurrentProcess();
 
-// Per thread process pointer.
-extern thread_local ProcessBase* __process__;
 
 // NOTE: Methods in this namespace should only be used in tests to
 // inject arbitrary events.

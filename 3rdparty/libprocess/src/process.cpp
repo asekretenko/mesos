@@ -543,7 +543,10 @@ thread_local Executor* _executor_ = nullptr;
 namespace metrics {
 namespace internal {
 
+// Global metrics process.
 PID<metrics::internal::MetricsProcess> metrics;
+
+PID<metrics::internal::MetricsProcess> getMetricsProcess() { return metrics; }
 
 } // namespace internal {
 } // namespace metrics {
@@ -559,6 +562,16 @@ PID<process::internal::JobObjectManager> job_object_manager;
 #endif // __WINDOWS__
 
 } // namespace internal {
+
+
+ProcessBase* getCurrentProcess() {
+  return __process__;
+}
+
+
+Executor* getCurrentThreadExecutor() {
+  return _executor_ == nullptr ? _executor_ = new Executor() : _executor_;
+}
 
 
 namespace http {

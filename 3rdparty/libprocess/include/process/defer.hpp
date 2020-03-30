@@ -275,11 +275,13 @@ _Deferred<F> defer(const UPID& pid, F&& f)
 template <typename F>
 _Deferred<F> defer(F&& f)
 {
-  if (__process__ != nullptr) {
-    return defer(__process__->self(), std::forward<F>(f));
+  ProcessBase* current = getCurrentProcess();
+
+  if (current != nullptr) {
+    return defer(current->self(), std::forward<F>(f));
   }
 
-  return __executor__->defer(std::forward<F>(f));
+  return getCurrentThreadExecutor()->defer(std::forward<F>(f));
 }
 
 } // namespace process {
