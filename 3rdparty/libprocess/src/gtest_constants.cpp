@@ -9,11 +9,26 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License
+#include <atomic>
+
+#include <stout/check.hpp>
 
 #include <process/gtest_constants.hpp>
 
 namespace process {
 
-Duration TEST_AWAIT_TIMEOUT = Seconds(15);
+static std::atomic<double> testAwaitTimeout {15.0};
+
+Duration getTestAwaitTimeout()
+{
+  return CHECK_NOTERROR(Duration::create(testAwaitTimeout));
+}
+
+
+void setTestAwaitTimeout(Duration timeout)
+{
+  testAwaitTimeout = timeout.secs();
+}
+
 
 } // namespace process {

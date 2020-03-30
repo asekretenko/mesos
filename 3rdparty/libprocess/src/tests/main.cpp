@@ -60,7 +60,7 @@ public:
     add(&Flags::test_await_timeout,
         "test_await_timeout",
         "The default timeout for awaiting test events.",
-        process::TEST_AWAIT_TIMEOUT);
+        process::getTestAwaitTimeout());
   }
 
   Duration test_await_timeout;
@@ -88,7 +88,7 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
-  process::TEST_AWAIT_TIMEOUT = flags.test_await_timeout;
+  process::setTestAwaitTimeout(flags.test_await_timeout);
 
   // Initialize Google Mock/Test.
   testing::InitGoogleMock(&argc, argv);
