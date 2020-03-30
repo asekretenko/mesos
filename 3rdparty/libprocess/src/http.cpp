@@ -140,47 +140,6 @@ StatusDescription statuses[] = {
 };
 
 
-const uint16_t Status::CONTINUE = 100;
-const uint16_t Status::SWITCHING_PROTOCOLS = 101;
-const uint16_t Status::OK = 200;
-const uint16_t Status::CREATED = 201;
-const uint16_t Status::ACCEPTED = 202;
-const uint16_t Status::NON_AUTHORITATIVE_INFORMATION = 203;
-const uint16_t Status::NO_CONTENT = 204;
-const uint16_t Status::RESET_CONTENT = 205;
-const uint16_t Status::PARTIAL_CONTENT = 206;
-const uint16_t Status::MULTIPLE_CHOICES = 300;
-const uint16_t Status::MOVED_PERMANENTLY = 301;
-const uint16_t Status::FOUND = 302;
-const uint16_t Status::SEE_OTHER = 303;
-const uint16_t Status::NOT_MODIFIED = 304;
-const uint16_t Status::USE_PROXY = 305;
-const uint16_t Status::TEMPORARY_REDIRECT = 307;
-const uint16_t Status::BAD_REQUEST = 400;
-const uint16_t Status::UNAUTHORIZED = 401;
-const uint16_t Status::PAYMENT_REQUIRED = 402;
-const uint16_t Status::FORBIDDEN = 403;
-const uint16_t Status::NOT_FOUND = 404;
-const uint16_t Status::METHOD_NOT_ALLOWED = 405;
-const uint16_t Status::NOT_ACCEPTABLE = 406;
-const uint16_t Status::PROXY_AUTHENTICATION_REQUIRED = 407;
-const uint16_t Status::REQUEST_TIMEOUT = 408;
-const uint16_t Status::CONFLICT = 409;
-const uint16_t Status::GONE = 410;
-const uint16_t Status::LENGTH_REQUIRED = 411;
-const uint16_t Status::PRECONDITION_FAILED = 412;
-const uint16_t Status::REQUEST_ENTITY_TOO_LARGE = 413;
-const uint16_t Status::REQUEST_URI_TOO_LARGE = 414;
-const uint16_t Status::UNSUPPORTED_MEDIA_TYPE = 415;
-const uint16_t Status::REQUESTED_RANGE_NOT_SATISFIABLE = 416;
-const uint16_t Status::EXPECTATION_FAILED = 417;
-const uint16_t Status::INTERNAL_SERVER_ERROR = 500;
-const uint16_t Status::NOT_IMPLEMENTED = 501;
-const uint16_t Status::BAD_GATEWAY = 502;
-const uint16_t Status::SERVICE_UNAVAILABLE = 503;
-const uint16_t Status::GATEWAY_TIMEOUT = 504;
-const uint16_t Status::HTTP_VERSION_NOT_SUPPORTED = 505;
-
 
 // Since the status codes are stored in increasing order, we could also
 // use std::lower_bound to do the lookup with logarithmic complexity.

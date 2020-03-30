@@ -223,52 +223,53 @@ struct CaseInsensitiveEqual
   }
 };
 
-
-struct Status
+// TODO(asekretenko): Rename `Status` into `status` to be consistent with
+// styleguide.
+namespace Status
 {
-  static const uint16_t CONTINUE;
-  static const uint16_t SWITCHING_PROTOCOLS;
-  static const uint16_t OK;
-  static const uint16_t CREATED;
-  static const uint16_t ACCEPTED;
-  static const uint16_t NON_AUTHORITATIVE_INFORMATION;
-  static const uint16_t NO_CONTENT;
-  static const uint16_t RESET_CONTENT;
-  static const uint16_t PARTIAL_CONTENT;
-  static const uint16_t MULTIPLE_CHOICES;
-  static const uint16_t MOVED_PERMANENTLY;
-  static const uint16_t FOUND;
-  static const uint16_t SEE_OTHER;
-  static const uint16_t NOT_MODIFIED;
-  static const uint16_t USE_PROXY;
-  static const uint16_t TEMPORARY_REDIRECT;
-  static const uint16_t BAD_REQUEST;
-  static const uint16_t UNAUTHORIZED;
-  static const uint16_t PAYMENT_REQUIRED;
-  static const uint16_t FORBIDDEN;
-  static const uint16_t NOT_FOUND;
-  static const uint16_t METHOD_NOT_ALLOWED;
-  static const uint16_t NOT_ACCEPTABLE;
-  static const uint16_t PROXY_AUTHENTICATION_REQUIRED;
-  static const uint16_t REQUEST_TIMEOUT;
-  static const uint16_t CONFLICT;
-  static const uint16_t GONE;
-  static const uint16_t LENGTH_REQUIRED;
-  static const uint16_t PRECONDITION_FAILED;
-  static const uint16_t REQUEST_ENTITY_TOO_LARGE;
-  static const uint16_t REQUEST_URI_TOO_LARGE;
-  static const uint16_t UNSUPPORTED_MEDIA_TYPE;
-  static const uint16_t REQUESTED_RANGE_NOT_SATISFIABLE;
-  static const uint16_t EXPECTATION_FAILED;
-  static const uint16_t INTERNAL_SERVER_ERROR;
-  static const uint16_t NOT_IMPLEMENTED;
-  static const uint16_t BAD_GATEWAY;
-  static const uint16_t SERVICE_UNAVAILABLE;
-  static const uint16_t GATEWAY_TIMEOUT;
-  static const uint16_t HTTP_VERSION_NOT_SUPPORTED;
+  constexpr uint16_t CONTINUE = 100;
+  constexpr uint16_t SWITCHING_PROTOCOLS = 101;
+  constexpr uint16_t OK = 200;
+  constexpr uint16_t CREATED = 201;
+  constexpr uint16_t ACCEPTED = 202;
+  constexpr uint16_t NON_AUTHORITATIVE_INFORMATION = 203;
+  constexpr uint16_t NO_CONTENT = 204;
+  constexpr uint16_t RESET_CONTENT = 205;
+  constexpr uint16_t PARTIAL_CONTENT = 206;
+  constexpr uint16_t MULTIPLE_CHOICES = 300;
+  constexpr uint16_t MOVED_PERMANENTLY = 301;
+  constexpr uint16_t FOUND = 302;
+  constexpr uint16_t SEE_OTHER = 303;
+  constexpr uint16_t NOT_MODIFIED = 304;
+  constexpr uint16_t USE_PROXY = 305;
+  constexpr uint16_t TEMPORARY_REDIRECT = 307;
+  constexpr uint16_t BAD_REQUEST = 400;
+  constexpr uint16_t UNAUTHORIZED = 401;
+  constexpr uint16_t PAYMENT_REQUIRED = 402;
+  constexpr uint16_t FORBIDDEN = 403;
+  constexpr uint16_t NOT_FOUND = 404;
+  constexpr uint16_t METHOD_NOT_ALLOWED = 405;
+  constexpr uint16_t NOT_ACCEPTABLE = 406;
+  constexpr uint16_t PROXY_AUTHENTICATION_REQUIRED = 407;
+  constexpr uint16_t REQUEST_TIMEOUT = 408;
+  constexpr uint16_t CONFLICT = 409;
+  constexpr uint16_t GONE = 410;
+  constexpr uint16_t LENGTH_REQUIRED = 411;
+  constexpr uint16_t PRECONDITION_FAILED = 412;
+  constexpr uint16_t REQUEST_ENTITY_TOO_LARGE = 413;
+  constexpr uint16_t REQUEST_URI_TOO_LARGE = 414;
+  constexpr uint16_t UNSUPPORTED_MEDIA_TYPE = 415;
+  constexpr uint16_t REQUESTED_RANGE_NOT_SATISFIABLE = 416;
+  constexpr uint16_t EXPECTATION_FAILED = 417;
+  constexpr uint16_t INTERNAL_SERVER_ERROR = 500;
+  constexpr uint16_t NOT_IMPLEMENTED = 501;
+  constexpr uint16_t BAD_GATEWAY = 502;
+  constexpr uint16_t SERVICE_UNAVAILABLE = 503;
+  constexpr uint16_t GATEWAY_TIMEOUT = 504;
+  constexpr uint16_t HTTP_VERSION_NOT_SUPPORTED = 505;
 
-  static std::string string(uint16_t code);
-};
+  std::string string(uint16_t code);
+}; // namespace Status {
 
 
 // Represents an asynchronous in-memory unbuffered Pipe, currently
