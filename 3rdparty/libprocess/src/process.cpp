@@ -293,13 +293,6 @@ string generate(const string& prefix)
 } // namespace ID {
 
 
-namespace mime {
-
-map<string, string> types;
-
-} // namespace mime {
-
-
 // Helper for creating routes without a process.
 // TODO(benh): Move this into route.hpp.
 class Route
@@ -543,7 +536,10 @@ thread_local Executor* _executor_ = nullptr;
 namespace metrics {
 namespace internal {
 
+// Global metrics process.
 PID<metrics::internal::MetricsProcess> metrics;
+
+PID<metrics::internal::MetricsProcess> getMetricsProcess() { return metrics; }
 
 } // namespace internal {
 } // namespace metrics {
@@ -559,6 +555,16 @@ PID<process::internal::JobObjectManager> job_object_manager;
 #endif // __WINDOWS__
 
 } // namespace internal {
+
+
+ProcessBase* getCurrentProcess() {
+  return __process__;
+}
+
+
+Executor* getCurrentThreadExecutor() {
+  return _executor_ == nullptr ? _executor_ = new Executor() : _executor_;
+}
 
 
 namespace http {
@@ -1234,9 +1240,6 @@ bool initialize(
   process::internal::job_object_manager =
     spawn(new process::internal::JobObjectManager(), true);
 #endif // __WINDOWS__
-
-  // Initialize the mime types.
-  mime::initialize();
 
   // Add a route for getting process information.
   lambda::function<Future<Response>(const Request&)> __processes__ =

@@ -2064,7 +2064,7 @@ TEST_F(ProcessTest, ProcessesEndpointNoHang)
 
       Time start = Clock::now();
 
-      while (Clock::now() - start < process::TEST_AWAIT_TIMEOUT) {
+      while (Clock::now() - start < process::getTestAwaitTimeout()) {
         if (eventCount<TerminateEvent>() == 1 &&
             eventCount<DispatchEvent>() == 1) {
           return Nothing();

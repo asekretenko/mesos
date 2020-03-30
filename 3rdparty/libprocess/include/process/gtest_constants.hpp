@@ -17,7 +17,9 @@
 
 namespace process {
 
-extern Duration TEST_AWAIT_TIMEOUT;
+Duration getTestAwaitTimeout();
+
+void setTestAwaitTimeout(Duration timeout);
 
 } // namespace process {
 

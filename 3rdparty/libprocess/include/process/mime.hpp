@@ -19,9 +19,7 @@
 namespace process {
 namespace mime {
 
-extern std::map<std::string, std::string> types;
-
-void initialize();
+const std::map<std::string, std::string>& types();
 
 } // namespace mime {
 } // namespace process {

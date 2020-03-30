@@ -39,7 +39,7 @@ using process::Future;
 TEST(SystemTest, DISABLED_Metrics)
 {
   Future<http::Response> response =
-    http::get(process::metrics::internal::metrics, "snapshot");
+    http::get(process::metrics::internal::getMetricsProcess(), "snapshot");
 
   AWAIT_READY(response);
 

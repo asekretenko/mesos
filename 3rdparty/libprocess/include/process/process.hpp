@@ -376,7 +376,7 @@ protected:
   void provide(
       const std::string& name,
       const std::string& path,
-      const std::map<std::string, std::string>& types = mime::types)
+      const std::map<std::string, std::string>& types)
   {
     // TODO(benh): Check that name is only alphanumeric (i.e., has no
     // '/') and that path is absolute.
@@ -384,6 +384,11 @@ protected:
     asset.path = path;
     asset.types = types;
     assets[name] = asset;
+  }
+
+  void provide(const std::string& name, const std::string& path)
+  {
+    provide(name, path, mime::types());
   }
 
   /**
@@ -704,9 +709,11 @@ inline bool wait(const ProcessBase* process, const Duration& duration)
   return process::wait(process->self(), duration); // Explicit to disambiguate.
 }
 
+/**
+ * Returns the process running in the current thread now.
+ */
+ProcessBase* getCurrentProcess();
 
-// Per thread process pointer.
-extern thread_local ProcessBase* __process__;
 
 // NOTE: Methods in this namespace should only be used in tests to
 // inject arbitrary events.
