@@ -247,7 +247,7 @@ template <typename T1, typename T2>
 
 
 #define AWAIT_ASSERT_ABANDONED(actual)                  \
-  AWAIT_ASSERT_ABANDONED_FOR(actual, process::TEST_AWAIT_TIMEOUT)
+  AWAIT_ASSERT_ABANDONED_FOR(actual, process::getTestAwaitTimeout())
 
 
 #define AWAIT_EXPECT_ABANDONED_FOR(actual, duration)            \
@@ -255,7 +255,7 @@ template <typename T1, typename T2>
 
 
 #define AWAIT_EXPECT_ABANDONED(actual)                  \
-  AWAIT_EXPECT_ABANDONED_FOR(actual, process::TEST_AWAIT_TIMEOUT)
+  AWAIT_EXPECT_ABANDONED_FOR(actual, process::getTestAwaitTimeout())
 
 
 // TODO(bmahler): Differentiate EXPECT and ASSERT here.
@@ -264,7 +264,7 @@ template <typename T1, typename T2>
 
 
 #define AWAIT(actual)                           \
-  AWAIT_FOR(actual, process::TEST_AWAIT_TIMEOUT)
+  AWAIT_FOR(actual, process::getTestAwaitTimeout())
 
 
 #define AWAIT_ASSERT_READY_FOR(actual, duration)                \
@@ -272,7 +272,7 @@ template <typename T1, typename T2>
 
 
 #define AWAIT_ASSERT_READY(actual)              \
-  AWAIT_ASSERT_READY_FOR(actual, process::TEST_AWAIT_TIMEOUT)
+  AWAIT_ASSERT_READY_FOR(actual, process::getTestAwaitTimeout())
 
 
 #define AWAIT_READY_FOR(actual, duration)       \
@@ -288,7 +288,7 @@ template <typename T1, typename T2>
 
 
 #define AWAIT_EXPECT_READY(actual)              \
-  AWAIT_EXPECT_READY_FOR(actual, process::TEST_AWAIT_TIMEOUT)
+  AWAIT_EXPECT_READY_FOR(actual, process::getTestAwaitTimeout())
 
 
 #define AWAIT_ASSERT_FAILED_FOR(actual, duration)               \
@@ -296,7 +296,7 @@ template <typename T1, typename T2>
 
 
 #define AWAIT_ASSERT_FAILED(actual)             \
-  AWAIT_ASSERT_FAILED_FOR(actual, process::TEST_AWAIT_TIMEOUT)
+  AWAIT_ASSERT_FAILED_FOR(actual, process::getTestAwaitTimeout())
 
 
 #define AWAIT_FAILED_FOR(actual, duration)       \
@@ -312,7 +312,7 @@ template <typename T1, typename T2>
 
 
 #define AWAIT_EXPECT_FAILED(actual)             \
-  AWAIT_EXPECT_FAILED_FOR(actual, process::TEST_AWAIT_TIMEOUT)
+  AWAIT_EXPECT_FAILED_FOR(actual, process::getTestAwaitTimeout())
 
 
 #define AWAIT_ASSERT_DISCARDED_FOR(actual, duration)            \
@@ -320,7 +320,7 @@ template <typename T1, typename T2>
 
 
 #define AWAIT_ASSERT_DISCARDED(actual)                  \
-  AWAIT_ASSERT_DISCARDED_FOR(actual, process::TEST_AWAIT_TIMEOUT)
+  AWAIT_ASSERT_DISCARDED_FOR(actual, process::getTestAwaitTimeout())
 
 
 #define AWAIT_DISCARDED_FOR(actual, duration)       \
@@ -336,7 +336,7 @@ template <typename T1, typename T2>
 
 
 #define AWAIT_EXPECT_DISCARDED(actual)                  \
-  AWAIT_EXPECT_DISCARDED_FOR(actual, process::TEST_AWAIT_TIMEOUT)
+  AWAIT_EXPECT_DISCARDED_FOR(actual, process::getTestAwaitTimeout())
 
 
 #define AWAIT_ASSERT_EQ_FOR(expected, actual, duration)                 \
@@ -344,7 +344,7 @@ template <typename T1, typename T2>
 
 
 #define AWAIT_ASSERT_EQ(expected, actual)       \
-  AWAIT_ASSERT_EQ_FOR(expected, actual, process::TEST_AWAIT_TIMEOUT)
+  AWAIT_ASSERT_EQ_FOR(expected, actual, process::getTestAwaitTimeout())
 
 
 #define AWAIT_EQ_FOR(expected, actual, duration)              \
@@ -360,7 +360,7 @@ template <typename T1, typename T2>
 
 
 #define AWAIT_EXPECT_EQ(expected, actual)               \
-  AWAIT_EXPECT_EQ_FOR(expected, actual, process::TEST_AWAIT_TIMEOUT)
+  AWAIT_EXPECT_EQ_FOR(expected, actual, process::getTestAwaitTimeout())
 
 
 #define AWAIT_ASSERT_TRUE_FOR(actual, duration)                 \
@@ -447,7 +447,7 @@ inline ::testing::AssertionResult AwaitAssertResponseStatusEq(
   AWAIT_ASSERT_RESPONSE_STATUS_EQ_FOR(                    \
       expected,                                           \
       actual,                                             \
-      process::TEST_AWAIT_TIMEOUT)
+      process::getTestAwaitTimeout())
 
 
 #define AWAIT_EXPECT_RESPONSE_STATUS_EQ_FOR(expected, actual, duration) \
@@ -458,7 +458,7 @@ inline ::testing::AssertionResult AwaitAssertResponseStatusEq(
   AWAIT_EXPECT_RESPONSE_STATUS_EQ_FOR(                    \
       expected,                                           \
       actual,                                             \
-      process::TEST_AWAIT_TIMEOUT)
+      process::getTestAwaitTimeout())
 
 
 inline ::testing::AssertionResult AwaitAssertResponseBodyEq(
@@ -496,7 +496,7 @@ inline ::testing::AssertionResult AwaitAssertResponseBodyEq(
   AWAIT_ASSERT_RESPONSE_BODY_EQ_FOR(                    \
       expected,                                         \
       actual,                                           \
-      process::TEST_AWAIT_TIMEOUT)
+      process::getTestAwaitTimeout())
 
 
 #define AWAIT_EXPECT_RESPONSE_BODY_EQ_FOR(expected, actual, duration)   \
@@ -507,7 +507,7 @@ inline ::testing::AssertionResult AwaitAssertResponseBodyEq(
   AWAIT_EXPECT_RESPONSE_BODY_EQ_FOR(                    \
       expected,                                         \
       actual,                                           \
-      process::TEST_AWAIT_TIMEOUT)
+      process::getTestAwaitTimeout())
 
 
 inline ::testing::AssertionResult AwaitAssertResponseHeaderEq(
@@ -557,7 +557,7 @@ inline ::testing::AssertionResult AwaitAssertResponseHeaderEq(
       expected,                                                 \
       key,                                                      \
       actual,                                                   \
-      process::TEST_AWAIT_TIMEOUT)
+      process::getTestAwaitTimeout())
 
 
 #define AWAIT_EXPECT_RESPONSE_HEADER_EQ_FOR(expected, key, actual, duration)  \
@@ -574,7 +574,7 @@ inline ::testing::AssertionResult AwaitAssertResponseHeaderEq(
       expected,                                                 \
       key,                                                      \
       actual,                                                   \
-      process::TEST_AWAIT_TIMEOUT)
+      process::getTestAwaitTimeout())
 
 
 inline ::testing::AssertionResult AwaitAssertExited(
@@ -607,7 +607,7 @@ inline ::testing::AssertionResult AwaitAssertExited(
 
 
 #define AWAIT_ASSERT_EXITED(expected, actual)                   \
-  AWAIT_ASSERT_EXITED_FOR(expected, actual, process::TEST_AWAIT_TIMEOUT)
+  AWAIT_ASSERT_EXITED_FOR(expected, actual, process::getTestAwaitTimeout())
 
 
 #define AWAIT_EXPECT_EXITED_FOR(expected, actual, duration)             \
@@ -615,7 +615,7 @@ inline ::testing::AssertionResult AwaitAssertExited(
 
 
 #define AWAIT_EXPECT_EXITED(expected, actual)                   \
-  AWAIT_EXPECT_EXITED_FOR(expected, actual, process::TEST_AWAIT_TIMEOUT)
+  AWAIT_EXPECT_EXITED_FOR(expected, actual, process::getTestAwaitTimeout())
 
 
 inline ::testing::AssertionResult AwaitAssertExitStatusEq(
@@ -651,7 +651,7 @@ inline ::testing::AssertionResult AwaitAssertExitStatusEq(
   AWAIT_ASSERT_WEXITSTATUS_EQ_FOR(                    \
       expected,                                       \
       actual,                                         \
-      process::TEST_AWAIT_TIMEOUT)
+      process::getTestAwaitTimeout())
 
 
 #define AWAIT_EXPECT_WEXITSTATUS_EQ_FOR(expected, actual, duration)     \
@@ -662,7 +662,7 @@ inline ::testing::AssertionResult AwaitAssertExitStatusEq(
   AWAIT_EXPECT_WEXITSTATUS_EQ_FOR(                    \
       expected,                                       \
       actual,                                         \
-      process::TEST_AWAIT_TIMEOUT)
+      process::getTestAwaitTimeout())
 
 
 inline ::testing::AssertionResult AwaitAssertExitStatusNe(
@@ -698,7 +698,7 @@ inline ::testing::AssertionResult AwaitAssertExitStatusNe(
   AWAIT_ASSERT_EXITSTATUS_NE_FOR(                     \
       expected,                                       \
       actual,                                         \
-      process::TEST_AWAIT_TIMEOUT)
+      process::getTestAwaitTimeout())
 
 
 #define AWAIT_EXPECT_WEXITSTATUS_NE_FOR(expected, actual, duration)     \
@@ -709,7 +709,7 @@ inline ::testing::AssertionResult AwaitAssertExitStatusNe(
   AWAIT_EXPECT_WEXITSTATUS_NE_FOR(                    \
       expected,                                       \
       actual,                                         \
-      process::TEST_AWAIT_TIMEOUT)
+      process::getTestAwaitTimeout())
 
 
 // Signals are't used on Windows, so #ifdef these out.
@@ -744,7 +744,7 @@ inline ::testing::AssertionResult AwaitAssertSignaled(
 
 
 #define AWAIT_ASSERT_SIGNALED(expected, actual)                 \
-  AWAIT_ASSERT_SIGNALED_FOR(expected, actual, process::TEST_AWAIT_TIMEOUT)
+  AWAIT_ASSERT_SIGNALED_FOR(expected, actual, process::getTestAwaitTimeout())
 
 
 #define AWAIT_EXPECT_SIGNALED_FOR(expected, actual, duration)           \
@@ -752,7 +752,7 @@ inline ::testing::AssertionResult AwaitAssertSignaled(
 
 
 #define AWAIT_EXPECT_SIGNALED(expected, actual)                 \
-  AWAIT_EXPECT_SIGNALED_FOR(expected, actual, process::TEST_AWAIT_TIMEOUT)
+  AWAIT_EXPECT_SIGNALED_FOR(expected, actual, process::getTestAwaitTimeout())
 
 
 inline ::testing::AssertionResult AwaitAssertTermSigEq(
@@ -788,7 +788,7 @@ inline ::testing::AssertionResult AwaitAssertTermSigEq(
   AWAIT_ASSERT_WTERMSIG_EQ_FOR(                     \
       expected,                                     \
       actual,                                       \
-      process::TEST_AWAIT_TIMEOUT)
+      process::getTestAwaitTimeout())
 
 
 #define AWAIT_EXPECT_WTERMSIG_EQ_FOR(expected, actual, duration)        \
@@ -799,7 +799,7 @@ inline ::testing::AssertionResult AwaitAssertTermSigEq(
   AWAIT_EXPECT_WTERMSIG_EQ_FOR(                     \
       expected,                                     \
       actual,                                       \
-      process::TEST_AWAIT_TIMEOUT)
+      process::getTestAwaitTimeout())
 
 
 inline ::testing::AssertionResult AwaitAssertTermSigNe(
@@ -835,7 +835,7 @@ inline ::testing::AssertionResult AwaitAssertTermSigNe(
   AWAIT_ASSERT_TERMSIG_NE_FOR(                      \
       expected,                                     \
       actual,                                       \
-      process::TEST_AWAIT_TIMEOUT
+      process::getTestAwaitTimeout()
 
 
 #define AWAIT_EXPECT_TERMSIG_NE_FOR(expected, actual, duration)         \
@@ -846,7 +846,7 @@ inline ::testing::AssertionResult AwaitAssertTermSigNe(
   AWAIT_EXPECT_WTERMSIG_NE_FOR(                     \
     expected,                                       \
     actual,                                         \
-    process::TEST_AWAIT_TIMEOUT)
+    process::getTestAwaitTimeout())
 
 
 // TODO(benh):
