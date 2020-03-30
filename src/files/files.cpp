@@ -786,8 +786,8 @@ Future<http::Response> FilesProcess::_download(const string& path)
   // Attempt to detect the mime type.
   Option<string> extension = Path(resolvedPath.get()).extension();
 
-  if (extension.isSome() && mime::types.count(extension.get()) > 0) {
-    response.headers["Content-Type"] = mime::types[extension.get()];
+  if (extension.isSome() && mime::types().count(extension.get()) > 0) {
+    response.headers["Content-Type"] = mime::types().at(extension.get());
   }
 
   return response;
