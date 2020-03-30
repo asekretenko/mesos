@@ -15,7 +15,7 @@
 namespace process {
 namespace mime {
 
-void initialize()
+const std::map<std::string, std::string>& types()
 {
   // These MIME types were collected via:
   /*
@@ -25,8 +25,7 @@ void initialize()
       print "types[\"%s\"] = \"%s\";" % (extension, type)
     '
   */
-
-  types.insert({
+  static const std::map<std::string, std::string>& types_{
     {".obj", "application/octet-stream"},
     {".ra", "audio/x-pn-realaudio"},
     {".wsdl", "application/xml"},
@@ -147,7 +146,9 @@ void initialize()
     {".mp3", "audio/mpeg"},
     {".mp2", "audio/mpeg"},
     {".mp4", "video/mp4"},
-  });
+  };
+
+  return types_;
 }
 
 } // namespace mime {
