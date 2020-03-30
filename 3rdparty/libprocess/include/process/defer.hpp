@@ -281,7 +281,7 @@ _Deferred<F> defer(F&& f)
     return defer(current->self(), std::forward<F>(f));
   }
 
-  return __executor__->defer(std::forward<F>(f));
+  return getCurrentThreadExecutor()->defer(std::forward<F>(f));
 }
 
 } // namespace process {

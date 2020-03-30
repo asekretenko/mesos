@@ -101,12 +101,8 @@ public:
 };
 
 
-// Per thread executor pointer. We use a pointer to lazily construct the
-// actual executor.
-extern thread_local Executor* _executor_;
-
-#define __executor__                                                    \
-  (_executor_ == nullptr ? _executor_ = new Executor() : _executor_)
+// Returns current thread's executor (creating it if necessary).
+Executor* getCurrentThreadExecutor();
 
 } // namespace process {
 

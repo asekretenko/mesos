@@ -566,6 +566,11 @@ ProcessBase* getCurrentProcess() {
 }
 
 
+Executor* getCurrentThreadExecutor() {
+  return _executor_ == nullptr ? _executor_ = new Executor() : _executor_;
+}
+
+
 namespace http {
 
 namespace authentication {
