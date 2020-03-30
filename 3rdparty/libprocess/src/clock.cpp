@@ -229,7 +229,7 @@ void Clock::finalize()
 
 Time Clock::now()
 {
-  return now(__process__);
+  return now(getCurrentProcess());
 }
 
 
@@ -269,10 +269,11 @@ Timer Clock::timer(
   // Start at 1 since Timer() instances use id 0.
   static std::atomic<uint64_t> id(1);
 
-  // Assumes Clock::now() does Clock::now(__process__).
+  // Assumes Clock::now() does Clock::now(getCurrentProcess()).
   Timeout timeout = Timeout::in(duration);
 
-  UPID pid = __process__ != nullptr ? __process__->self() : UPID();
+  ProcessBase* current = getCurrentProcess();
+  UPID pid = current != nullptr ? current->self() : UPID();
 
   Timer timer(id.fetch_add(1), timeout, pid, thunk);
 

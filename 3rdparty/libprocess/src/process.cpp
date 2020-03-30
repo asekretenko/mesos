@@ -561,6 +561,11 @@ PID<process::internal::JobObjectManager> job_object_manager;
 } // namespace internal {
 
 
+ProcessBase* getCurrentProcess() {
+  return __process__;
+}
+
+
 namespace http {
 
 namespace authentication {
