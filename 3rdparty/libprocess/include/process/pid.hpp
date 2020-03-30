@@ -111,8 +111,6 @@ struct UPID
   // TODO(benh): Factor this out into a generic copy-on-write string.
   struct ID
   {
-    static const std::string EMPTY;
-
     ID() = default;
 
     ID(const std::string& s)
@@ -129,18 +127,12 @@ struct UPID
 
     bool operator==(const std::string& that) const
     {
-      if (!id) {
-        return EMPTY == that;
-      }
-      return *id == that;
+      return id ? *id == that : that.empty();
     }
 
     bool operator==(const char* that) const
     {
-      if (!id) {
-        return EMPTY == that;
-      }
-      return *id == that;
+      return id ? *id == that : *that == '\0';
     }
 
     bool operator!=(const std::string& that) const
@@ -150,16 +142,16 @@ struct UPID
 
     bool operator<(const std::string& that) const
     {
-      if (!id) {
-        return EMPTY < that;
-      }
-      return *id < that;
+      return id ? *id < that : !that.empty();
     }
 
     operator const std::string&() const
     {
       if (!id) {
-        return EMPTY;
+        // NOTE: At program termination, this string is leaked to avoid
+        // destruction order issues.
+        static const std::string* const empty = new std::string();
+        return *empty;
       }
       return *id;
     }
