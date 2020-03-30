@@ -12,10 +12,13 @@
 
 #include <process/mime.hpp>
 
+using std::map;
+using std::string;
+
 namespace process {
 namespace mime {
 
-void initialize()
+const std::map<string, string>& types()
 {
   // These MIME types were collected via:
   /*
@@ -26,7 +29,9 @@ void initialize()
     '
   */
 
-  types.insert({
+  // NOTE: This map is leaked on program termination to avoid potential
+  // issues with order of calling destructors.
+  static const map<string, string>* const types_ = new map<string, string>({
     {".obj", "application/octet-stream"},
     {".ra", "audio/x-pn-realaudio"},
     {".wsdl", "application/xml"},
@@ -148,6 +153,8 @@ void initialize()
     {".mp2", "audio/mpeg"},
     {".mp4", "video/mp4"},
   });
+
+  return *types_;
 }
 
 } // namespace mime {

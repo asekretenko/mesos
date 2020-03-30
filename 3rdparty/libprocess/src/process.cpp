@@ -293,13 +293,6 @@ string generate(const string& prefix)
 } // namespace ID {
 
 
-namespace mime {
-
-map<string, string> types;
-
-} // namespace mime {
-
-
 // Helper for creating routes without a process.
 // TODO(benh): Move this into route.hpp.
 class Route
@@ -1251,9 +1244,6 @@ bool initialize(
   process::internal::job_object_manager =
     spawn(new process::internal::JobObjectManager(), true);
 #endif // __WINDOWS__
-
-  // Initialize the mime types.
-  mime::initialize();
 
   // Add a route for getting process information.
   lambda::function<Future<Response>(const Request&)> __processes__ =
