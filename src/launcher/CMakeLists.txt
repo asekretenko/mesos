@@ -17,15 +17,15 @@
 # THE LAUNCHER EXECUTOR AND FETCHER EXECUTABLES.
 ################################################
 add_executable(mesos-default-executor default_executor.cpp)
-target_link_libraries(mesos-default-executor PRIVATE mesos)
+target_link_libraries(mesos-default-executor PRIVATE mesos-agent-impl)
 
 add_executable(mesos-executor executor.cpp)
-target_link_libraries(mesos-executor PRIVATE mesos)
+target_link_libraries(mesos-executor PRIVATE mesos-agent-impl)
 
 add_executable(mesos-fetcher fetcher.cpp)
-target_link_libraries(mesos-fetcher PRIVATE mesos)
+target_link_libraries(mesos-fetcher PRIVATE mesos-agent-impl)
 
 # THE DOCKER EXECUTOR EXECUTABLE.
 #################################
 add_executable(mesos-docker-executor docker_executor.cpp)
-target_link_libraries(mesos-docker-executor PRIVATE mesos mesos-protobufs process protobuf)
+target_link_libraries(mesos-docker-executor PRIVATE mesos-agent-impl mesos-protobufs process protobuf)

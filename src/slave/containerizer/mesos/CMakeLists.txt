@@ -17,21 +17,21 @@
 # THE CONTAINERIZER EXECUTABLE.
 ###############################
 add_executable(mesos-containerizer main.cpp)
-target_link_libraries(mesos-containerizer PRIVATE mesos)
+target_link_libraries(mesos-containerizer PRIVATE mesos-agent-impl)
 
 if (NOT WIN32)
   add_executable(mesos-io-switchboard io/switchboard_main.cpp)
-  target_link_libraries(mesos-io-switchboard PRIVATE mesos)
+  target_link_libraries(mesos-io-switchboard PRIVATE mesos-agent-impl)
 
   add_executable(
     mesos-cni-port-mapper
     isolators/network/cni/plugins/port_mapper/main.cpp
     isolators/network/cni/plugins/port_mapper/port_mapper.cpp)
 
-  target_link_libraries(mesos-cni-port-mapper PRIVATE mesos)
+  target_link_libraries(mesos-cni-port-mapper PRIVATE mesos-agent-impl)
 endif ()
 
 if (ENABLE_PORT_MAPPING_ISOLATOR)
   add_executable(mesos-network-helper isolators/network/helper.cpp)
-  target_link_libraries(mesos-network-helper PRIVATE mesos)
+  target_link_libraries(mesos-network-helper PRIVATE mesos-agent-impl)
 endif ()

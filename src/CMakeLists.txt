@@ -538,11 +538,8 @@ set(ZOOKEEPER_SRC
   zookeeper/group.cpp)
 
 set(MESOS_INTERNAL_SRC
-  ${AGENT_SRC}
-  ${DOCKER_SRC}
   ${FILES_SRC}
   ${HDFS_SRC}
-  ${HEALTH_CHECK_SRC}
   ${INTERNAL_SRC}
   ${LOGGING_SRC}
   ${MASTER_DETECTOR_SRC}
@@ -556,8 +553,6 @@ set(MESOS_INTERNAL_SRC
 set(MESOS_EXPORTED_SRC
   ${AUTHORIZER_SRC}
   ${DOCKER_SPEC_SRC}
-  ${EXECUTOR_SRC}
-  ${RESOURCE_PROVIDER_SRC}
   ${SECRET_SRC}
   ${STATE_SRC}
   ${URI_SRC}
@@ -565,25 +560,31 @@ set(MESOS_EXPORTED_SRC
 
 if (NOT WIN32)
   list(APPEND MESOS_EXPORTED_SRC
-    ${APPC_SRC}
-    ${CSI_SRC}
-    ${LOG_SRC}
-    ${OCI_SRC}
-    ${POSIX_SRC})
+    ${LOG_SRC})
 endif ()
+
 
 # Include source for linux build.
 #
 # TODO(andschwa): Make this conditional happen sooner, instead of
 # here, and remove unnecessary variables.
 if (LINUX)
-  list(APPEND MESOS_EXPORTED_SRC ${LINUX_SRC})
+  set(AGENT_PLATFORM_SRC ${LINUX_SRC})
 endif ()
 
 # Include source for Windows build.
 if (WIN32)
-  list(APPEND MESOS_EXPORTED_SRC ${WIN32_SRC})
+  set(AGENT_PLATFORM_SRC ${WIN32_SRC})
 endif ()
+
+if (NOT WIN32)
+  list(APPEND AGENT_PLATFORM_SRC
+    ${APPC_SRC}
+    ${CSI_SRC}
+    ${OCI_SRC}
+    ${POSIX_SRC})
+endif ()
+
 
 # Generate all binaries in the same folder.
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/src)
@@ -637,7 +638,7 @@ endif ()
 
 # THE MESOS LIBRARY
 ###################
-add_library(mesos STATIC ${MESOS_EXPORTED_SRC} ${MESOS_INTERNAL_SRC})
+add_library(mesos ${MESOS_EXPORTED_SRC} ${MESOS_INTERNAL_SRC})
 
 set_target_properties(
   mesos PROPERTIES
@@ -686,9 +687,53 @@ if (ENABLE_PRECOMPILED_HEADERS)
 endif ()
 
 
+# Mesos-agent implementation
+###################
+add_library(mesos-agent-impl
+  ${AGENT_SRC}
+  ${DOCKER_SRC}
+  ${EXECUTOR_SRC}
+  ${HEALTH_CHECK_SRC}
+  ${RESOURCE_PROVIDER_SRC}
+  ${AGENT_PLATFORM_SRC})
+
+set_target_properties(
+  mesos-agent-impl PROPERTIES
+  VERSION ${MESOS_PACKAGE_VERSION}
+  SOVERSION ${MESOS_PACKAGE_SOVERSION})
+
+target_compile_definitions(
+  mesos-agent-impl PUBLIC
+  USE_CMAKE_BUILD_CONFIG
+  $<$<BOOL:${ENABLE_XFS_DISK_ISOLATOR}>:ENABLE_XFS_DISK_ISOLATOR>
+  $<$<BOOL:${ENABLE_LAUNCHER_SEALING}>:ENABLE_LAUNCHER_SEALING>
+  $<$<BOOL:${ENABLE_NVML}>:ENABLE_NVML>
+  $<$<BOOL:${ENABLE_PORT_MAPPING_ISOLATOR}>:ENABLE_PORT_MAPPING_ISOLATOR>
+  $<$<BOOL:${ENABLE_NETWORK_PORTS_ISOLATOR}>:ENABLE_NETWORK_PORTS_ISOLATOR>
+  $<$<BOOL:${ENABLE_SECCOMP_ISOLATOR}>:ENABLE_SECCOMP_ISOLATOR>)
+
+target_include_directories(
+  mesos-agent-impl PUBLIC
+  ${MESOS_PUBLIC_INCLUDE_DIR}
+  ${MESOS_BIN_INCLUDE_DIR}
+  ${MESOS_BIN_SRC_DIR}
+  ${MESOS_SRC_DIR})
+
+target_link_libraries(mesos-agent-impl PUBLIC mesos)
+
+if (ENABLE_PRECOMPILED_HEADERS)
+  set_target_properties(
+    mesos-agent-impl PROPERTIES
+    COTIRE_ADD_UNITY_BUILD FALSE
+    COTIRE_PREFIX_HEADER_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/3rdparty;${CMAKE_BINARY_DIR}/3rdparty")
+
+  cotire(mesos-agent-impl)
+endif ()
+
+
 # Mesos-master implementation
 ###################
-add_library(mesos-master-impl STATIC ${MASTER_SRC})
+add_library(mesos-master-impl ${MASTER_SRC})
 
 set_target_properties(
   mesos-master-impl PROPERTIES
@@ -725,7 +770,7 @@ endif ()
 
 # Mesos-local implementation
 ###################
-add_library(mesos-local-impl STATIC ${LOCAL_SRC})
+add_library(mesos-local-impl ${LOCAL_SRC})
 
 set_target_properties(
   mesos-local-impl PROPERTIES
@@ -749,7 +794,10 @@ target_include_directories(
   ${MESOS_BIN_SRC_DIR}
   ${MESOS_SRC_DIR})
 
-target_link_libraries(mesos-local-impl PUBLIC mesos-master-impl)
+target_link_libraries(
+  mesos-local-impl PUBLIC
+  mesos-agent-impl
+  mesos-master-impl)
 
 if (ENABLE_PRECOMPILED_HEADERS)
   set_target_properties(
@@ -763,7 +811,7 @@ endif ()
 
 # Scheduler driver library.
 ###################
-add_library(mesos-scheduler STATIC ${SCHEDULER_SRC})
+add_library(mesos-scheduler ${SCHEDULER_SRC})
 
 set_target_properties(
   mesos-scheduler PROPERTIES
@@ -787,7 +835,7 @@ target_include_directories(
   ${MESOS_BIN_SRC_DIR}
   ${MESOS_SRC_DIR})
 
-target_link_libraries(mesos-scheduler PUBLIC mesos-local-impl mesos-master-impl)
+target_link_libraries(mesos-scheduler PUBLIC mesos-local-impl mesos-master-impl mesos-agent-impl)
 
 if (ENABLE_PRECOMPILED_HEADERS)
   set_target_properties(
