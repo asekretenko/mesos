@@ -22,7 +22,7 @@ add_subdirectory(resource_estimators)
 # THE AGENT EXECUTABLE.
 #######################
 add_executable(mesos-agent main.cpp)
-target_link_libraries(mesos-agent PRIVATE mesos)
+target_link_libraries(mesos-agent PRIVATE mesos-agent-internal)
 
 if (ENABLE_JEMALLOC_ALLOCATOR)
   target_link_libraries(mesos-agent PRIVATE jemalloc)

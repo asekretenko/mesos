@@ -302,8 +302,10 @@ set(DOCKER_SRC
   docker/docker.cpp
   docker/executor.cpp)
 
+set(DOCKER_SPEC_SRC)
+
 if (NOT WIN32)
-  list(APPEND DOCKER_SRC
+  list(APPEND DOCKER_SPEC_SRC
     docker/spec.cpp)
 endif ()
 
@@ -439,9 +441,12 @@ set(LOGGING_SRC
   logging/flags.cpp
   logging/logging.cpp)
 
+set(MASTER_CONSTANTS_SRC
+   master/constants.cpp
+)
+
 set(MASTER_SRC
   master/authorization.cpp
-  master/constants.cpp
   master/flags.cpp
   master/framework.cpp
   master/http.cpp
@@ -464,7 +469,9 @@ set(MASTER_SRC
   master/allocator/mesos/sorter/random/sorter.cpp
   master/contender/contender.cpp
   master/contender/standalone.cpp
-  master/contender/zookeeper.cpp
+  master/contender/zookeeper.cpp)
+
+set(MASTER_DETECTOR_SRC
   master/detector/detector.cpp
   master/detector/standalone.cpp
   master/detector/zookeeper.cpp)
@@ -562,41 +569,30 @@ set(ZOOKEEPER_SRC
   zookeeper/zookeeper.cpp
   zookeeper/group.cpp)
 
-set(MESOS_SRC
-  ${AGENT_SRC}
-  ${AUTHENTICATION_SRC}
-  ${AUTHORIZER_SRC}
-  ${COMMON_SRC}
-  ${DOCKER_SRC}
-  ${EXECUTOR_SRC}
+set(MESOS_INTERNAL_SRC
   ${FILES_SRC}
   ${HDFS_SRC}
-  ${HEALTH_CHECK_SRC}
   ${INTERNAL_SRC}
-  ${LOCAL_SRC}
   ${LOGGING_SRC}
-  ${MASTER_SRC}
+  ${MASTER_DETECTOR_SRC}
   ${MESSAGES_SRC}
-  ${MODULE_SRC}
-  ${RESOURCE_PROVIDER_SRC}
-  ${SCHEDULER_SRC}
+  ${STATUS_UPDATE_MANAGER_SRC}
+  ${USAGE_SRC}
+  ${VERSION_SRC}
+  ${WATCHER_SRC})
+
+
+set(MESOS_EXPORTED_SRC
+  ${AUTHORIZER_SRC}
+  ${DOCKER_SPEC_SRC}
   ${SECRET_SRC}
   ${STATE_SRC}
-  ${STATUS_UPDATE_MANAGER_SRC}
   ${URI_SRC}
-  ${USAGE_SRC}
-  ${V1_SRC}
-  ${VERSION_SRC}
-  ${WATCHER_SRC}
   ${ZOOKEEPER_SRC})
 
 if (NOT WIN32)
-  list(APPEND MESOS_SRC
-    ${APPC_SRC}
-    ${CSI_SRC}
-    ${LOG_SRC}
-    ${OCI_SRC}
-    ${POSIX_SRC})
+  list(APPEND MESOS_EXPORTED_SRC
+    ${LOG_SRC})
 endif ()
 
 # Include source for linux build.
@@ -604,12 +600,20 @@ endif ()
 # TODO(andschwa): Make this conditional happen sooner, instead of
 # here, and remove unnecessary variables.
 if (LINUX)
-  list(APPEND MESOS_SRC ${LINUX_SRC})
+  set(AGENT_PLATFORM_SRC ${LINUX_SRC})
 endif ()
 
 # Include source for Windows build.
 if (WIN32)
-  list(APPEND MESOS_SRC ${WIN32_SRC})
+  set(AGENT_PLATFORM_SRC ${WIN32_SRC})
+endif ()
+
+if (NOT WIN32)
+  list(APPEND AGENT_PLATFORM_SRC
+    ${APPC_SRC}
+    ${CSI_SRC}
+    ${OCI_SRC}
+    ${POSIX_SRC})
 endif ()
 
 # Generate all binaries in the same folder.
@@ -627,9 +631,46 @@ if (WIN32)
 endif ()
 
 
+# Mesos-base library
+###################
+add_library(
+  mesos-base
+  ${AUTHENTICATION_SRC}
+  ${COMMON_SRC}
+  ${MASTER_CONSTANTS_SRC}
+  ${MODULE_SRC}
+  ${V1_SRC}
+)
+
+set_target_properties(
+  mesos-base PROPERTIES
+  VERSION ${MESOS_PACKAGE_VERSION}
+  SOVERSION ${MESOS_PACKAGE_SOVERSION})
+
+target_compile_definitions(mesos-base PUBLIC USE_CMAKE_BUILD_CONFIG)
+
+target_include_directories(mesos-base
+  PUBLIC ${MESOS_PUBLIC_INCLUDE_DIR}
+  PRIVATE ${MESOS_SRC_DIR})
+
+target_link_libraries(
+  mesos-base
+  PUBLIC process mesos-protobufs
+  PRIVATE sasl2 mesos-protobufs-internal)
+
+if (ENABLE_PRECOMPILED_HEADERS)
+  set_target_properties(
+    mesos-base PROPERTIES
+    COTIRE_ADD_UNITY_BUILD FALSE
+    COTIRE_PREFIX_HEADER_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/3rdparty;${CMAKE_BINARY_DIR}/3rdparty")
+
+  cotire(mesos-base)
+endif ()
+
+
 # THE MESOS LIBRARY
 ###################
-add_library(mesos ${MESOS_SRC})
+add_library(mesos ${MESOS_EXPORTED_SRC} ${MESOS_INTERNAL_SRC})
 
 set_target_properties(
   mesos PROPERTIES
@@ -654,31 +695,117 @@ target_include_directories(
   ${MESOS_SRC_DIR})
 
 target_link_libraries(
-  mesos PUBLIC
-  process
-  sasl2
-  zookeeper
-  mesos-protobufs
-  mesos-protobufs-internal
-  $<$<AND:$<PLATFORM_ID:Linux>,$<BOOL:${ENABLE_NVML}>>:nvml>
-  $<$<BOOL:${HAS_JAVA}>:mesos-java>)
+  mesos
+  PUBLIC mesos-base zookeeper
+  PRIVATE mesos-protobufs-internal
+)
+
+if(HAS_JAVA)
+  target_link_libraries(mesos PUBLIC mesos-java)
+endif()
 
 if (NOT WIN32)
   target_link_libraries(mesos PUBLIC leveldb)
 endif ()
 
+# Mesos agent internals.
+########################
+add_library(mesos-agent-internal
+  ${AGENT_SRC}
+  ${DOCKER_SRC}
+  ${EXECUTOR_SRC}
+  ${HEALTH_CHECK_SRC}
+  ${RESOURCE_PROVIDER_SRC}
+  ${AGENT_PLATFORM_SRC})
+
+set_target_properties(
+  mesos-agent-internal PROPERTIES
+  VERSION ${MESOS_PACKAGE_VERSION}
+  SOVERSION ${MESOS_PACKAGE_SOVERSION})
+
+target_compile_definitions(
+  mesos-agent-internal PUBLIC
+  USE_CMAKE_BUILD_CONFIG
+  $<$<BOOL:${ENABLE_XFS_DISK_ISOLATOR}>:ENABLE_XFS_DISK_ISOLATOR>
+  $<$<BOOL:${ENABLE_LAUNCHER_SEALING}>:ENABLE_LAUNCHER_SEALING>
+  $<$<BOOL:${ENABLE_NVML}>:ENABLE_NVML>
+  $<$<BOOL:${ENABLE_PORT_MAPPING_ISOLATOR}>:ENABLE_PORT_MAPPING_ISOLATOR>
+  $<$<BOOL:${ENABLE_NETWORK_PORTS_ISOLATOR}>:ENABLE_NETWORK_PORTS_ISOLATOR>
+  $<$<BOOL:${ENABLE_SECCOMP_ISOLATOR}>:ENABLE_SECCOMP_ISOLATOR>)
+
+target_include_directories(
+  mesos-agent-internal PUBLIC
+  ${MESOS_PUBLIC_INCLUDE_DIR}
+  ${MESOS_BIN_INCLUDE_DIR}
+  ${MESOS_BIN_SRC_DIR}
+  ${MESOS_SRC_DIR})
+
+target_link_libraries(
+  mesos-agent-internal
+  PUBLIC mesos mesos-protobufs-internal)
+
+if (ENABLE_NVML)
+  target_link_libraries(mesos-agent-internal PUBLIC nvml)
+endif ()
+
+
 if (ENABLE_SECCOMP_ISOLATOR)
-  target_link_libraries(mesos PUBLIC libseccomp)
+  target_link_libraries(mesos-agent-internal PRIVATE libseccomp)
 endif ()
 
-if (ENABLE_PRECOMPILED_HEADERS)
-  set_target_properties(
-    mesos PROPERTIES
-    COTIRE_ADD_UNITY_BUILD FALSE
-    COTIRE_PREFIX_HEADER_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/3rdparty;${CMAKE_BINARY_DIR}/3rdparty")
 
-  cotire(mesos)
-endif ()
+# Mesos-master internals.
+#########################
+add_library(mesos-master-internal ${MASTER_SRC})
+
+set_target_properties(
+  mesos-master-internal PROPERTIES
+  VERSION ${MESOS_PACKAGE_VERSION}
+  SOVERSION ${MESOS_PACKAGE_SOVERSION})
+
+target_compile_definitions(mesos-master-internal PUBLIC USE_CMAKE_BUILD_CONFIG)
+
+target_include_directories(mesos-master-internal PUBLIC  ${MESOS_SRC_DIR})
+
+target_link_libraries(
+  mesos-master-internal
+  PUBLIC mesos mesos-protobufs-internal)
+
+# Mesos-local internals.
+########################
+add_library(mesos-local-internal ${LOCAL_SRC})
+
+set_target_properties(
+  mesos-local-internal PROPERTIES
+  VERSION ${MESOS_PACKAGE_VERSION}
+  SOVERSION ${MESOS_PACKAGE_SOVERSION})
+
+target_compile_definitions(mesos-local-internal PUBLIC USE_CMAKE_BUILD_CONFIG)
+
+target_include_directories(mesos-local-internal PUBLIC ${MESOS_SRC_DIR})
+
+target_link_libraries(mesos-local-internal
+  PUBLIC mesos-agent-internal mesos-master-internal)
+
+# Scheduler driver library.
+###########################
+add_library(mesos-scheduler ${SCHEDULER_SRC})
+
+set_target_properties(
+  mesos-scheduler PROPERTIES
+  VERSION ${MESOS_PACKAGE_VERSION}
+  SOVERSION ${MESOS_PACKAGE_SOVERSION})
+
+target_compile_definitions(mesos-scheduler PUBLIC USE_CMAKE_BUILD_CONFIG)
+
+target_include_directories(
+  mesos-scheduler
+  PUBLIC ${MESOS_PUBLIC_INCLUDE_DIR}
+  PRIVATE ${MESOS_SRC_DIR})
+
+target_link_libraries(mesos-scheduler
+  PUBLIC mesos-master-internal mesos-agent-internal mesos-local-internal)
+
 
 # BUILD THE MESOS EXECUTABLES.
 ##############################
