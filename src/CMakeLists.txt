@@ -407,9 +407,12 @@ set(LOGGING_SRC
   logging/flags.cpp
   logging/logging.cpp)
 
+set(MASTER_CONSTANTS_SRC
+   master/constants.cpp
+)
+
 set(MASTER_SRC
   master/authorization.cpp
-  master/constants.cpp
   master/flags.cpp
   master/framework.cpp
   master/http.cpp
@@ -547,18 +550,14 @@ set(MESOS_INTERNAL_SRC
 
 
 set(MESOS_EXPORTED_SRC
-  ${AUTHENTICATION_SRC}
   ${AUTHORIZER_SRC}
-  ${COMMON_SRC}
   ${DOCKER_SRC}
   ${EXECUTOR_SRC}
-  ${MODULE_SRC}
   ${RESOURCE_PROVIDER_SRC}
   ${SCHEDULER_SRC}
   ${SECRET_SRC}
   ${STATE_SRC}
   ${URI_SRC}
-  ${V1_SRC}
   ${ZOOKEEPER_SRC})
 
 if (NOT WIN32)
@@ -597,8 +596,42 @@ if (WIN32)
   SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/src/.libs)
 endif ()
 
+# Mesos libraries
+###################
 
-# Mesos library, exports
+add_library(
+  mesos-base
+  ${AUTHENTICATION_SRC}
+  ${COMMON_SRC}
+  ${MASTER_CONSTANTS_SRC}
+  ${MODULE_SRC}
+  ${V1_SRC}
+)
+
+set_target_properties(
+  mesos-base PROPERTIES
+  VERSION ${MESOS_PACKAGE_VERSION}
+  SOVERSION ${MESOS_PACKAGE_SOVERSION})
+
+target_compile_definitions(mesos-base PUBLIC USE_CMAKE_BUILD_CONFIG)
+target_include_directories(mesos-base PUBLIC ${MESOS_PUBLIC_INCLUDE_DIR})
+
+target_link_libraries(
+  mesos-base PUBLIC
+  process
+  sasl2
+  mesos-protobufs)
+
+if (ENABLE_PRECOMPILED_HEADERS)
+  set_target_properties(
+    mesos-base PROPERTIES
+    COTIRE_ADD_UNITY_BUILD FALSE
+    COTIRE_PREFIX_HEADER_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/3rdparty;${CMAKE_BINARY_DIR}/3rdparty")
+
+  cotire(mesos-base)
+endif ()
+
+
 ###################
 add_library(mesos ${MESOS_EXPORTED_SRC})
 
@@ -613,10 +646,8 @@ target_include_directories(mesos PUBLIC ${MESOS_PUBLIC_INCLUDE_DIR})
 
 target_link_libraries(
   mesos PUBLIC
-  process
-  sasl2
   zookeeper
-  mesos-protobufs
+  mesos-base
   $<$<BOOL:${HAS_JAVA}>:mesos-java>)
 
 if (NOT WIN32)
