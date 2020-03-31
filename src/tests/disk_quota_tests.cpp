@@ -904,7 +904,7 @@ TEST_P(DiskQuotaEnforcement, SlaveRecovery)
       }
     }
 
-    ASSERT_LT(elapsed, process::TEST_AWAIT_TIMEOUT);
+    ASSERT_LT(elapsed, process::getTestAwaitTimeout());
 
     os::sleep(Milliseconds(1));
     elapsed += Milliseconds(1);

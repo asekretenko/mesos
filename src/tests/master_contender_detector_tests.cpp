@@ -471,7 +471,7 @@ TEST_F(ZooKeeperMasterContenderDetectorTest, ContenderDetectorShutdownNetwork)
 
   ASSERT_SOME(url);
 
-  Duration sessionTimeout = process::TEST_AWAIT_TIMEOUT;
+  Duration sessionTimeout = process::getTestAwaitTimeout();
 
   ZooKeeperMasterContender contender(url.get(), sessionTimeout);
 

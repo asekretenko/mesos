@@ -322,9 +322,9 @@ TEST_F(NamespacesIsolatorTest, ROOT_IPCNamespaceWithIPCModeUnset)
 
     os::sleep(Seconds(1));
     waited += Seconds(1);
-  } while (waited < process::TEST_AWAIT_TIMEOUT);
+  } while (waited < process::getTestAwaitTimeout());
 
-  EXPECT_LT(waited, process::TEST_AWAIT_TIMEOUT);
+  EXPECT_LT(waited, process::getTestAwaitTimeout());
 
   // Launch a nested container with IPC mode unset and it has its own rootfs.
   ContainerID nestedContainerId;
@@ -448,9 +448,9 @@ TEST_F(NamespacesIsolatorTest, ROOT_IPCNamespaceWithIPCIsolatorDisabled)
 
     os::sleep(Seconds(1));
     waited += Seconds(1);
-  } while (waited < process::TEST_AWAIT_TIMEOUT);
+  } while (waited < process::getTestAwaitTimeout());
 
-  EXPECT_LT(waited, process::TEST_AWAIT_TIMEOUT);
+  EXPECT_LT(waited, process::getTestAwaitTimeout());
 
   // Launch a nested container which has its own rootfs.
   ContainerID nestedContainerId;
@@ -572,9 +572,9 @@ TEST_F(NamespacesIsolatorTest, ROOT_ShareIPCNamespace)
 
     os::sleep(Seconds(1));
     waited += Seconds(1);
-  } while (waited < process::TEST_AWAIT_TIMEOUT);
+  } while (waited < process::getTestAwaitTimeout());
 
-  EXPECT_LT(waited, process::TEST_AWAIT_TIMEOUT);
+  EXPECT_LT(waited, process::getTestAwaitTimeout());
 
   // The file created by the top-level container should only exist in
   // its own /dev/shm rather than in agent's /dev/shm.
@@ -623,9 +623,9 @@ TEST_F(NamespacesIsolatorTest, ROOT_ShareIPCNamespace)
 
     os::sleep(Seconds(1));
     waited += Seconds(1);
-  } while (waited < process::TEST_AWAIT_TIMEOUT);
+  } while (waited < process::getTestAwaitTimeout());
 
-  EXPECT_LT(waited, process::TEST_AWAIT_TIMEOUT);
+  EXPECT_LT(waited, process::getTestAwaitTimeout());
 
   // Launch the second child container with its own rootfs, check its /dev/shm
   // size is 128MB, it can see the files created by its parent container and the
@@ -665,9 +665,9 @@ TEST_F(NamespacesIsolatorTest, ROOT_ShareIPCNamespace)
 
     os::sleep(Seconds(1));
     waited += Seconds(1);
-  } while (waited < process::TEST_AWAIT_TIMEOUT);
+  } while (waited < process::getTestAwaitTimeout());
 
-  EXPECT_LT(waited, process::TEST_AWAIT_TIMEOUT);
+  EXPECT_LT(waited, process::getTestAwaitTimeout());
 
   // Launch a grandchild container with `SHARE_PARENT` ipc mode under the first
   // child container, check its /dev/shm size is 128MB, it can see the files
@@ -813,9 +813,9 @@ TEST_F(NamespacesIsolatorTest, ROOT_PrivateIPCNamespace)
 
     os::sleep(Seconds(1));
     waited += Seconds(1);
-  } while (waited < process::TEST_AWAIT_TIMEOUT);
+  } while (waited < process::getTestAwaitTimeout());
 
-  EXPECT_LT(waited, process::TEST_AWAIT_TIMEOUT);
+  EXPECT_LT(waited, process::getTestAwaitTimeout());
 
   // Launch a nested container with `PRIVATE` IPC mode, check its /dev/shm
   // size is correctly set to the default value and the file created by the
@@ -856,9 +856,9 @@ TEST_F(NamespacesIsolatorTest, ROOT_PrivateIPCNamespace)
 
     os::sleep(Seconds(1));
     waited += Seconds(1);
-  } while (waited < process::TEST_AWAIT_TIMEOUT);
+  } while (waited < process::getTestAwaitTimeout());
 
-  EXPECT_LT(waited, process::TEST_AWAIT_TIMEOUT);
+  EXPECT_LT(waited, process::getTestAwaitTimeout());
 
   // Launch another nested container with private IPC mode and 128MB
   // /dev/shm, check its /dev/shm size is correctly set to 128MB and
