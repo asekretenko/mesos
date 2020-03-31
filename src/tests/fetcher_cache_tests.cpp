@@ -75,7 +75,7 @@ using mesos::internal::slave::FetcherProcess;
 
 using mesos::master::detector::MasterDetector;
 
-using process::TEST_AWAIT_TIMEOUT;
+using process::getTestAwaitTimeout;
 using process::Future;
 using process::HttpEvent;
 using process::Latch;
@@ -454,7 +454,7 @@ Try<FetcherCacheTest::Task> FetcherCacheTest::launchTask(
     .WillOnce(FutureArg<1>(&offers))
     .WillRepeatedly(DeclineOffers());
 
-  offers.await(TEST_AWAIT_TIMEOUT);
+  offers.await(getTestAwaitTimeout());
   if (!offers.isReady()) {
     return Error("Failed to wait for resource offers: " +
            (offers.isFailed() ? offers.failure() : "discarded"));
@@ -563,7 +563,7 @@ Try<vector<FetcherCacheTest::Task>> FetcherCacheTest::launchTasks(
     .WillOnce(FutureArg<1>(&offers))
     .WillRepeatedly(DeclineOffers());
 
-  offers.await(TEST_AWAIT_TIMEOUT);
+  offers.await(getTestAwaitTimeout());
   if (!offers.isReady()) {
     return Error("Failed to wait for resource offers: " +
            (offers.isFailed() ? offers.failure() : "discarded"));

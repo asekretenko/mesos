@@ -946,7 +946,7 @@ TYPED_TEST(SlaveRecoveryTest, PingTimeoutDuringRecovery)
   // Set the executor reregister timeout to a value greater than
   // (agent_ping_timeout * (max_agent_ping_timeouts + 1)).
   slave::Flags slaveFlags = this->CreateSlaveFlags();
-  slaveFlags.executor_reregistration_timeout = process::TEST_AWAIT_TIMEOUT;
+  slaveFlags.executor_reregistration_timeout = process::getTestAwaitTimeout();
 
   Fetcher fetcher(slaveFlags);
 

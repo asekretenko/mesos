@@ -1481,7 +1481,7 @@ TEST_F(GarbageCollectorIntegrationTest, ROOT_DanglingMount)
   EXPECT_TRUE(os::exists(sandbox));
 
   // Wait for the task to create the dangling mount point.
-  Timeout timeout = Timeout::in(process::TEST_AWAIT_TIMEOUT);
+  Timeout timeout = Timeout::in(process::getTestAwaitTimeout());
   while (!os::exists(path::join(sandbox, mountPoint)) ||
          !timeout.expired()) {
     os::sleep(Milliseconds(10));

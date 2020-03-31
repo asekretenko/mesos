@@ -2631,7 +2631,7 @@ TEST_F(CgroupsIsolatorTest, ROOT_CGROUPS_BlkioUsage)
 
     os::sleep(Seconds(1));
     waited += Seconds(1);
-  } while (waited < process::TEST_AWAIT_TIMEOUT);
+  } while (waited < process::getTestAwaitTimeout());
 
   ASSERT_SOME(fileSize);
   ASSERT_EQ(10240u, fileSize->bytes());

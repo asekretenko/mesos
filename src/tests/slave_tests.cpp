@@ -10468,7 +10468,7 @@ TEST_F(SlaveTest, ExecutorReregistrationTimeoutFlag)
 
   // Set the executor reregister timeout to a value greater than the default.
   slave::Flags slaveFlags = CreateSlaveFlags();
-  slaveFlags.executor_reregistration_timeout = process::TEST_AWAIT_TIMEOUT;
+  slaveFlags.executor_reregistration_timeout = process::getTestAwaitTimeout();
 
   Fetcher fetcher(slaveFlags);
 

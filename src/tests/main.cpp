@@ -105,7 +105,7 @@ int main(int argc, char** argv)
     flags.quiet = true;
   }
 
-  process::TEST_AWAIT_TIMEOUT = flags.test_await_timeout;
+  process::setTestAwaitTimeout(flags.test_await_timeout);
 
   // Initialize logging.
   logging::initialize(argv[0], true, flags);

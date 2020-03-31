@@ -164,12 +164,10 @@ Flags::Flags()
       "load an alternate authenticator module using --modules.",
       master::DEFAULT_AUTHENTICATOR);
 
-  // NOTE: The default await timeout matches process::TEST_AWAIT_TIMEOUT,
-  // but we can't use that value directly due to static initializer ordering.
   add(&Flags::test_await_timeout,
       "test_await_timeout",
       "The default timeout for awaiting test events.",
-      Seconds(15));
+      process::getTestAwaitTimeout());
 }
 
 } // namespace tests {
