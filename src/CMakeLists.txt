@@ -598,31 +598,18 @@ if (WIN32)
 endif ()
 
 
-# THE MESOS LIBRARY
+# Mesos library, exports
 ###################
-add_library(mesos ${MESOS_INTERNAL_SRC} ${MESOS_EXPORTED_SRC})
+add_library(mesos ${MESOS_EXPORTED_SRC})
 
 set_target_properties(
   mesos PROPERTIES
   VERSION ${MESOS_PACKAGE_VERSION}
   SOVERSION ${MESOS_PACKAGE_SOVERSION})
 
-target_compile_definitions(
-  mesos PUBLIC
-  USE_CMAKE_BUILD_CONFIG
-  $<$<BOOL:${ENABLE_XFS_DISK_ISOLATOR}>:ENABLE_XFS_DISK_ISOLATOR>
-  $<$<BOOL:${ENABLE_LAUNCHER_SEALING}>:ENABLE_LAUNCHER_SEALING>
-  $<$<BOOL:${ENABLE_NVML}>:ENABLE_NVML>
-  $<$<BOOL:${ENABLE_PORT_MAPPING_ISOLATOR}>:ENABLE_PORT_MAPPING_ISOLATOR>
-  $<$<BOOL:${ENABLE_NETWORK_PORTS_ISOLATOR}>:ENABLE_NETWORK_PORTS_ISOLATOR>
-  $<$<BOOL:${ENABLE_SECCOMP_ISOLATOR}>:ENABLE_SECCOMP_ISOLATOR>)
+target_compile_definitions(mesos PUBLIC USE_CMAKE_BUILD_CONFIG)
 
-target_include_directories(
-  mesos PUBLIC
-  ${MESOS_PUBLIC_INCLUDE_DIR}
-  ${MESOS_BIN_INCLUDE_DIR}
-  ${MESOS_BIN_SRC_DIR}
-  ${MESOS_SRC_DIR})
+target_include_directories(mesos PUBLIC ${MESOS_PUBLIC_INCLUDE_DIR})
 
 target_link_libraries(
   mesos PUBLIC
@@ -630,15 +617,10 @@ target_link_libraries(
   sasl2
   zookeeper
   mesos-protobufs
-  $<$<AND:$<PLATFORM_ID:Linux>,$<BOOL:${ENABLE_NVML}>>:nvml>
   $<$<BOOL:${HAS_JAVA}>:mesos-java>)
 
 if (NOT WIN32)
   target_link_libraries(mesos PUBLIC leveldb)
-endif ()
-
-if (ENABLE_SECCOMP_ISOLATOR)
-  target_link_libraries(mesos PUBLIC libseccomp)
 endif ()
 
 if (ENABLE_PRECOMPILED_HEADERS)
@@ -648,6 +630,50 @@ if (ENABLE_PRECOMPILED_HEADERS)
     COTIRE_PREFIX_HEADER_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/3rdparty;${CMAKE_BINARY_DIR}/3rdparty")
 
   cotire(mesos)
+endif ()
+
+
+# THE MESOS LIBRARY, internals
+###################
+add_library(mesos-internal ${MESOS_INTERNAL_SRC})
+
+set_target_properties(
+  mesos-internal PROPERTIES
+  VERSION ${MESOS_PACKAGE_VERSION}
+  SOVERSION ${MESOS_PACKAGE_SOVERSION})
+
+target_compile_definitions(
+  mesos-internal PUBLIC
+  USE_CMAKE_BUILD_CONFIG
+  $<$<BOOL:${ENABLE_XFS_DISK_ISOLATOR}>:ENABLE_XFS_DISK_ISOLATOR>
+  $<$<BOOL:${ENABLE_LAUNCHER_SEALING}>:ENABLE_LAUNCHER_SEALING>
+  $<$<BOOL:${ENABLE_NVML}>:ENABLE_NVML>
+  $<$<BOOL:${ENABLE_PORT_MAPPING_ISOLATOR}>:ENABLE_PORT_MAPPING_ISOLATOR>
+  $<$<BOOL:${ENABLE_NETWORK_PORTS_ISOLATOR}>:ENABLE_NETWORK_PORTS_ISOLATOR>
+  $<$<BOOL:${ENABLE_SECCOMP_ISOLATOR}>:ENABLE_SECCOMP_ISOLATOR>)
+
+target_include_directories(
+  mesos-internal PUBLIC
+  ${MESOS_BIN_INCLUDE_DIR}
+  ${MESOS_BIN_SRC_DIR}
+  ${MESOS_SRC_DIR})
+
+target_link_libraries(
+  mesos-internal PUBLIC
+  mesos
+  $<$<AND:$<PLATFORM_ID:Linux>,$<BOOL:${ENABLE_NVML}>>:nvml>)
+
+if (ENABLE_SECCOMP_ISOLATOR)
+  target_link_libraries(mesos-internal PUBLIC libseccomp)
+endif ()
+
+if (ENABLE_PRECOMPILED_HEADERS)
+  set_target_properties(
+    mesos-internal PROPERTIES
+    COTIRE_ADD_UNITY_BUILD FALSE
+    COTIRE_PREFIX_HEADER_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/3rdparty;${CMAKE_BINARY_DIR}/3rdparty")
+
+  cotire(mesos-internal)
 endif ()
 
 # BUILD THE MESOS EXECUTABLES.
