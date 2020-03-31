@@ -76,8 +76,7 @@ private:
   std::map<pid_t, JobData> jobs;
 };
 
-// Global job object manager process. Defined in `process.cpp`.
-extern PID<JobObjectManager> job_object_manager;
+PID<JobObjectManager> getJobObjectManager();
 
 } // namespace internal {
 
@@ -115,7 +114,7 @@ inline Subprocess::ParentHook Subprocess::ParentHook::CREATE_JOB() {
     // open for the entire lifetime of the agent process, and is closed
     // when the process is reaped.
     dispatch(
-      process::internal::job_object_manager,
+      process::internal::getJobObjectManager(),
       &process::internal::JobObjectManager::manage,
       pid,
       name.get(),

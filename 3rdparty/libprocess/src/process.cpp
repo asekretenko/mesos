@@ -559,6 +559,10 @@ PID<process::internal::ReaperProcess> reaper;
 // Global job object manager.
 #ifdef __WINDOWS__
 PID<process::internal::JobObjectManager> job_object_manager;
+
+PID<process::internal::JobObjectManager> getJobObjectManager() {
+  return job_object_manager;
+}
 #endif // __WINDOWS__
 
 } // namespace internal {
