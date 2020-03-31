@@ -105,6 +105,7 @@ if (ENABLE_SSL)
 endif ()
 
 add_library(process ${PROCESS_SRC})
+#set_property(TARGET process PROPERTY CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 
 target_link_libraries(
   process PUBLIC
@@ -117,6 +118,7 @@ target_link_libraries(
 target_link_libraries(
   process PRIVATE
   concurrentqueue
+  #  grpc
   $<IF:$<BOOL:${ENABLE_LIBEVENT}>,libevent,$<$<NOT:$<PLATFORM_ID:Windows>>:libev>>)
 
 target_compile_definitions(

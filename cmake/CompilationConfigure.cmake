@@ -520,6 +520,7 @@ if (WIN32)
   if (BUILD_SHARED_LIBS)
     message(WARNING "Building with shared libraries is a work-in-progress.")
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+    add_definitions(-DPROTOBUF_USE_DLLS)
   endif ()
 
   if (ENABLE_SSL)

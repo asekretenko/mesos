@@ -1273,10 +1273,14 @@ if (WIN32)
   PATCH_CMD(PROTOBUF_PATCH_CMD protobuf-${PROTOBUF_VERSION}.patch)
 
   # Link to the CRT dynamically.
+  # Note that each instance of CRT will have its own instance of a memory allocator (new/delete)!
   list(APPEND PROTOBUF_CMAKE_FORWARD_ARGS
     -Dprotobuf_MSVC_STATIC_RUNTIME=OFF)
 
   if (CMAKE_GENERATOR MATCHES "Visual Studio")
+	  #    list(APPEND PROTOBUF_CMAKE_FORWARD_ARGS
+	    #      -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=true)
+
     set_target_properties(
       protobuf PROPERTIES
       IMPORTED_LOCATION_DEBUG ${PROTOBUF_ROOT}-build/Debug/libprotobufd${LIBRARY_SUFFIX}

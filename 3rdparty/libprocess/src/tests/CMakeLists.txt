@@ -79,6 +79,7 @@ if (ENABLE_SSL)
 endif ()
 
 add_library(process-interface INTERFACE)
+
 target_link_libraries(process-interface INTERFACE process googletest)
 target_include_directories(process-interface INTERFACE ..)
 

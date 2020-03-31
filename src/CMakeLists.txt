@@ -110,7 +110,7 @@ endif ()
 # Unfortunately, this is not supported on Windows. But because modules are not
 # yet supported either, for now we can build it statically.
 if (WIN32)
-  set(MESOS_PROTOBUFS_LINKAGE STATIC)
+	set(MESOS_PROTOBUFS_LINKAGE STATIC)
 else ()
   set(MESOS_PROTOBUFS_LINKAGE SHARED)
 endif ()
@@ -635,7 +635,7 @@ endif ()
 
 # THE MESOS LIBRARY, internals
 ###################
-add_library(mesos-internal ${MESOS_INTERNAL_SRC})
+add_library(mesos-internal STATIC ${MESOS_INTERNAL_SRC})
 
 set_target_properties(
   mesos-internal PROPERTIES
