@@ -530,13 +530,8 @@ set(ZOOKEEPER_SRC
   zookeeper/zookeeper.cpp
   zookeeper/group.cpp)
 
-set(MESOS_SRC
+set(MESOS_INTERNAL_SRC
   ${AGENT_SRC}
-  ${AUTHENTICATION_SRC}
-  ${AUTHORIZER_SRC}
-  ${COMMON_SRC}
-  ${DOCKER_SRC}
-  ${EXECUTOR_SRC}
   ${FILES_SRC}
   ${HDFS_SRC}
   ${HEALTH_CHECK_SRC}
@@ -545,21 +540,29 @@ set(MESOS_SRC
   ${LOGGING_SRC}
   ${MASTER_SRC}
   ${MESSAGES_SRC}
+  ${STATUS_UPDATE_MANAGER_SRC}
+  ${USAGE_SRC}
+  ${VERSION_SRC}
+  ${WATCHER_SRC})
+
+
+set(MESOS_EXPORTED_SRC
+  ${AUTHENTICATION_SRC}
+  ${AUTHORIZER_SRC}
+  ${COMMON_SRC}
+  ${DOCKER_SRC}
+  ${EXECUTOR_SRC}
   ${MODULE_SRC}
   ${RESOURCE_PROVIDER_SRC}
   ${SCHEDULER_SRC}
   ${SECRET_SRC}
   ${STATE_SRC}
-  ${STATUS_UPDATE_MANAGER_SRC}
   ${URI_SRC}
-  ${USAGE_SRC}
   ${V1_SRC}
-  ${VERSION_SRC}
-  ${WATCHER_SRC}
   ${ZOOKEEPER_SRC})
 
 if (NOT WIN32)
-  list(APPEND MESOS_SRC
+  list(APPEND MESOS_EXPORTED_SRC
     ${APPC_SRC}
     ${CSI_SRC}
     ${LOG_SRC}
@@ -572,12 +575,12 @@ endif ()
 # TODO(andschwa): Make this conditional happen sooner, instead of
 # here, and remove unnecessary variables.
 if (LINUX)
-  list(APPEND MESOS_SRC ${LINUX_SRC})
+  list(APPEND MESOS_EXPORTED_SRC ${LINUX_SRC})
 endif ()
 
 # Include source for Windows build.
 if (WIN32)
-  list(APPEND MESOS_SRC ${WIN32_SRC})
+  list(APPEND MESOS_EXPORTED_SRC ${WIN32_SRC})
 endif ()
 
 # Generate all binaries in the same folder.
@@ -597,7 +600,7 @@ endif ()
 
 # THE MESOS LIBRARY
 ###################
-add_library(mesos ${MESOS_SRC})
+add_library(mesos ${MESOS_INTERNAL_SRC} ${MESOS_EXPORTED_SRC})
 
 set_target_properties(
   mesos PROPERTIES
