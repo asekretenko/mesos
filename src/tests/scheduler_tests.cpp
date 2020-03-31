@@ -412,8 +412,8 @@ TEST_P(SchedulerTest, MetricsEndpoint)
 
   AWAIT_READY(subscribed);
 
-  Future<process::http::Response> response =
-    process::http::get(process::metrics::internal::metrics, "snapshot");
+  Future<process::http::Response> response = process::http::get(
+      process::metrics::internal::getMetricsProcess(), "snapshot");
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(OK().status, response);
   AWAIT_EXPECT_RESPONSE_HEADER_EQ(APPLICATION_JSON, "Content-Type", response);
