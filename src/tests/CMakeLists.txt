@@ -289,6 +289,9 @@ add_library(mesos-tests-interface INTERFACE)
 target_link_libraries(
   mesos-tests-interface INTERFACE
   mesos
+  mesos-agent-impl
+  mesos-master-impl
+  mesos-scheduler
   googletest)
 
 if (NOT WIN32)

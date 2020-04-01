@@ -18,4 +18,4 @@
 #######################################
 # NOTE: This library uses underscores to be consistent with other modules.
 add_library(uri_disk_profile_adaptor uri_disk_profile_adaptor.cpp)
-target_link_libraries(uri_disk_profile_adaptor PRIVATE mesos)
+target_link_libraries(uri_disk_profile_adaptor PRIVATE mesos-agent-impl)
