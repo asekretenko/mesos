@@ -1747,7 +1747,7 @@ Option<Error> LocalAuthorizer::validate(const ACLs& acls)
   foreach (const ACL::GetEndpoint& acl, acls.get_endpoints()) {
     if (acl.paths().type() == ACL::Entity::SOME) {
       foreach (const string& path, acl.paths().values()) {
-        if (!authorization::AUTHORIZABLE_ENDPOINTS.contains(path)) {
+        if (!authorization::isAuthorizableEndpoint(path)) {
           return Error("Path: '" + path + "' is not an authorizable path");
         }
       }

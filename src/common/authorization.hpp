@@ -32,7 +32,9 @@
 namespace mesos {
 namespace authorization {
 
-extern hashset<std::string> AUTHORIZABLE_ENDPOINTS;
+// Returns whether the endpoint access is protected with the authorization
+// action `GET_ENDPOINTS_WITH_PATH`.
+bool isAuthorizableEndpoint(const std::string& endpoint);
 
 // Collects authorization results. Any discarded or failed future
 // results in a failure; any false future results in 'false'.
