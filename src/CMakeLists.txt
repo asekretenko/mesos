@@ -115,10 +115,7 @@ else ()
   set(MESOS_PROTOBUFS_LINKAGE SHARED)
 endif ()
 
-add_library(
-  mesos-protobufs ${MESOS_PROTOBUFS_LINKAGE}
-  ${PUBLIC_PROTOBUF_SRC}
-  ${INTERNAL_PROTOBUF_SRC})
+add_library(mesos-protobufs ${MESOS_PROTOBUFS_LINKAGE} ${PUBLIC_PROTOBUF_SRC})
 
 target_link_libraries(mesos-protobufs PUBLIC
   protobuf
@@ -127,7 +124,7 @@ target_link_libraries(mesos-protobufs PUBLIC
 target_include_directories(
   mesos-protobufs
   PUBLIC
-  ${MESOS_PROTOBUF_HEADER_INCLUDE_DIRS})
+  ${MESOS_PUBLIC_PROTOBUF_HEADER_INCLUDE_DIRS})
 
 if(WIN32 AND BUILD_SHARED_LIBS)
   # This results in protobuf headers being compiled with __declspec(dllexport)
@@ -136,10 +133,34 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   # `mesos-protobufs.dll`.
   target_compile_definitions(
     mesos-protobufs
-    PRIVATE -D"MESOS_PROTOBUF_DLLEXPORT_DECL=__declspec(dllexport)"
-    INTERFACE -D"MESOS_PROTOBUF_DLLEXPORT_DECL=__declspec(dllimport)"
+    PRIVATE -D"MESOS_PUBLIC_PROTOBUF_DLLEXPORT_DECL=__declspec(dllexport)"
+    INTERFACE -D"MESOS_PUBLIC_PROTOBUF_DLLEXPORT_DECL=__declspec(dllimport)"
   )
 endif()
+
+add_library(
+  mesos-protobufs-internal ${MESOS_PROTOBUFS_LINKAGE}
+  ${INTERNAL_PROTOBUF_SRC})
+
+target_link_libraries(mesos-protobufs-internal PUBLIC mesos-protobufs)
+
+target_include_directories(
+  mesos-protobufs-internal
+  PUBLIC
+  ${MESOS_INTERNAL_PROTOBUF_HEADER_INCLUDE_DIRS})
+
+if(WIN32)
+  # This results in protobuf headers being compiled with __declspec(dllexport)
+  # when building `mesos-protobufs-internal.dll`, which is needed for all the
+  # static data (default instances, etc.) to be exported from
+  # `mesos-protobufs-internal.dll`.
+  target_compile_definitions(
+    mesos-protobufs-internal
+    PRIVATE -D"MESOS_INTERNAL_PROTOBUF_DLLEXPORT_DECL=__declspec(dllexport)"
+    INTERFACE -D"MESOS_INTERNAL_PROTOBUF_DLLEXPORT_DECL=__declspec(dllimport)"
+  )
+endif()
+
 
 # BUILD JAVA ARTIFACTS.
 #######################
@@ -638,6 +659,7 @@ target_link_libraries(
   sasl2
   zookeeper
   mesos-protobufs
+  mesos-protobufs-internal
   $<$<AND:$<PLATFORM_ID:Linux>,$<BOOL:${ENABLE_NVML}>>:nvml>
   $<$<BOOL:${HAS_JAVA}>:mesos-java>)
 
