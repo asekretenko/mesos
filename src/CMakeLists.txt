@@ -110,7 +110,7 @@ endif ()
 # Unfortunately, this is not supported on Windows. But because modules are not
 # yet supported either, for now we can build it statically.
 if (WIN32)
-  set(MESOS_PROTOBUFS_LINKAGE STATIC)
+	set(MESOS_PROTOBUFS_LINKAGE ${LIBRARY_LINKAGE})
 else ()
   set(MESOS_PROTOBUFS_LINKAGE SHARED)
 endif ()
@@ -129,6 +129,17 @@ target_include_directories(
   PUBLIC
   ${MESOS_PROTOBUF_HEADER_INCLUDE_DIRS})
 
+if(WIN32 AND BUILD_SHARED_LIBS)
+  # This results in protobuf headers being compiled with __declspec(dllexport)
+  # when building `mesos-protobufs.dll`, which is needed for all the
+  # static data (default instances, etc.) to be exported from
+  # `mesos-protobufs.dll`.
+  target_compile_definitions(
+    mesos-protobufs
+    PRIVATE -D"MESOS_PROTOBUF_DLLEXPORT_DECL=__declspec(dllexport)"
+    INTERFACE -D"MESOS_PROTOBUF_DLLEXPORT_DECL=__declspec(dllimport)"
+  )
+endif()
 
 # BUILD JAVA ARTIFACTS.
 #######################
