@@ -862,14 +862,14 @@ target_include_directories(
 
 target_link_libraries(mesos-scheduler PUBLIC mesos-local-impl mesos-master-impl mesos-agent-impl)
 
-if (ENABLE_PRECOMPILED_HEADERS)
-  set_target_properties(
-    mesos-scheduer PROPERTIES
-    COTIRE_ADD_UNITY_BUILD FALSE
-    COTIRE_PREFIX_HEADER_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/3rdparty;${CMAKE_BINARY_DIR}/3rdparty")
+#if (ENABLE_PRECOMPILED_HEADERS)
+#  set_target_properties(
+#    mesos-scheduer PROPERTIES
+#    COTIRE_ADD_UNITY_BUILD FALSE
+#    COTIRE_PREFIX_HEADER_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/3rdparty;${CMAKE_BINARY_DIR}/3rdparty")
 
-  cotire(mesos-scheduler)
-endif ()
+#  cotire(mesos-scheduler)
+#endif ()
 
 
 # BUILD THE MESOS EXECUTABLES.
