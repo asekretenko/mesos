@@ -40,40 +40,56 @@ namespace mesos {
 namespace internal {
 namespace build {
 
-const string DATE = BUILD_DATE;
-const double TIME = atof(BUILD_TIME);
+string date() { return BUILD_DATE; };
+double time() { return atof(BUILD_TIME); };
 
+string user()
+{
 #ifdef BUILD_USER
-const string USER = BUILD_USER;
+  return BUILD_USER;
 #else
-const string USER = "";
+  return "";
 #endif
+}
 
-const string FLAGS = BUILD_FLAGS;
+string flags() { return BUILD_FLAGS; };
 
+string java_jvm_library()
+{
 #ifdef BUILD_JAVA_JVM_LIBRARY
-const string JAVA_JVM_LIBRARY = BUILD_JAVA_JVM_LIBRARY;
+  return BUILD_JAVA_JVM_LIBRARY;
 #else
-const string JAVA_JVM_LIBRARY = "";
+  return "";
 #endif
+}
 
+Option<string> git_sha()
+{
 #ifdef BUILD_GIT_SHA
-const Option<string> GIT_SHA = string(BUILD_GIT_SHA);
+  return string(BUILD_GIT_SHA);
 #else
-const Option<string> GIT_SHA = None();
+  return None();
 #endif
+}
 
+Option<string> git_branch()
+{
 #ifdef BUILD_GIT_BRANCH
-const Option<string> GIT_BRANCH = string(BUILD_GIT_BRANCH);
+  return string(BUILD_GIT_BRANCH);
 #else
-const Option<string> GIT_BRANCH = None();
+  return None();
 #endif
+}
 
+Option<string> git_tag()
+{
 #ifdef BUILD_GIT_TAG
-const Option<string> GIT_TAG = string(BUILD_GIT_TAG);
+  return string(BUILD_GIT_TAG);
 #else
-const Option<string> GIT_TAG = None();
+  return None();
 #endif
+}
+
 } // namespace build {
 } // namespace internal {
 } // namespace mesos {

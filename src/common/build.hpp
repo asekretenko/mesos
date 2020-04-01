@@ -23,14 +23,14 @@ namespace mesos {
 namespace internal {
 namespace build {
 
-extern const std::string DATE;
-extern const double TIME;
-extern const std::string USER;
-extern const std::string FLAGS;
-extern const std::string JAVA_JVM_LIBRARY;
-extern const Option<std::string> GIT_SHA;
-extern const Option<std::string> GIT_BRANCH;
-extern const Option<std::string> GIT_TAG;
+std::string date();
+double time();
+std::string user();
+std::string flags();
+std::string java_jvm_library();
+Option<std::string> git_sha();
+Option<std::string> git_branch();
+Option<std::string> git_tag();
 
 } // namespace build {
 } // namespace internal {

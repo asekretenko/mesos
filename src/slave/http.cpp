@@ -1353,21 +1353,21 @@ Future<Response> Http::state(
           auto state = [this, &approvers](JSON::ObjectWriter* writer) {
             writer->field("version", MESOS_VERSION);
 
-            if (build::GIT_SHA.isSome()) {
-              writer->field("git_sha", build::GIT_SHA.get());
+            if (build::git_sha().isSome()) {
+              writer->field("git_sha", build::git_sha().get());
             }
 
-            if (build::GIT_BRANCH.isSome()) {
-              writer->field("git_branch", build::GIT_BRANCH.get());
+            if (build::git_branch().isSome()) {
+              writer->field("git_branch", build::git_branch().get());
             }
 
-            if (build::GIT_TAG.isSome()) {
-              writer->field("git_tag", build::GIT_TAG.get());
+            if (build::git_tag().isSome()) {
+              writer->field("git_tag", build::git_tag().get());
             }
 
-            writer->field("build_date", build::DATE);
-            writer->field("build_time", build::TIME);
-            writer->field("build_user", build::USER);
+            writer->field("build_date", build::date());
+            writer->field("build_time", build::time());
+            writer->field("build_user", build::user());
             writer->field("start_time", slave->startTime.secs());
 
             writer->field("id", slave->info.id().value());
