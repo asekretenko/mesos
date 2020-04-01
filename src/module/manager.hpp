@@ -55,7 +55,6 @@ namespace modules {
 // 3. Instantiate singleton per module. (happens in the library)
 // 4. Bind reference to use case. (happens in Mesos)
 
-
 class ModuleManager
 {
 public:
@@ -66,57 +65,28 @@ public:
   // all of the already loaded libraries.
   static Try<Nothing> load(const Modules& modules)
   {
-    return loadManifest(modules);
+    return state().load(modules);
   }
 
   // NOTE: If loading fails at a particular library we don't unload
   // all of the already loaded libraries.
-  static Try<Nothing> load(const std::string& modulesDir);
+  static Try<Nothing> load(const std::string& modulesDir)
+  {
+    return state().load(modulesDir);
+  }
 
   // create() should be called only after load().
   template <typename T>
   static Try<T*> create(
-      const std::string& moduleName,
-      const Option<Parameters>& params = None())
+      const std::string& moduleName, const Option<Parameters>& params = None())
   {
-    synchronized (mutex) {
-      if (!moduleBases.contains(moduleName)) {
-        return Error(
-            "Module '" + moduleName + "' unknown");
-      }
-
-      Module<T>* module = (Module<T>*) moduleBases[moduleName];
-      if (module->create == nullptr) {
-        return Error(
-            "Error creating module instance for '" + moduleName + "': "
-            "create() method not found");
-      }
-
-      std::string expectedKind = kind<T>();
-      if (expectedKind != module->kind) {
-        return Error(
-            "Error creating module instance for '" + moduleName + "': "
-            "module is of kind '" + module->kind + "', but the requested "
-            "kind is '" + expectedKind + "'");
-      }
-
-      T* instance =
-        module->create(
-            params.isSome() ? params.get() : moduleParameters[moduleName]);
-      if (instance == nullptr) {
-        return Error("Error creating Module instance for '" + moduleName + "'");
-      }
-      return instance;
-    }
+    return state().create<T>(moduleName, params);
   }
 
   template <typename T>
   static bool contains(const std::string& moduleName)
   {
-    synchronized (mutex) {
-      return (moduleBases.contains(moduleName) &&
-              moduleBases[moduleName]->kind == stringify(kind<T>()));
-    }
+    return state().contains<T>(moduleName);
   }
 
   // Returns all module names that have been loaded that implement the
@@ -129,65 +99,140 @@ public:
   template <typename T>
   static std::vector<std::string> find()
   {
-    std::vector<std::string> names;
-
-    synchronized (mutex) {
-      foreachpair (const std::string& name, ModuleBase* base, moduleBases) {
-        if (base->kind == stringify(kind<T>())) {
-          names.push_back(name);
-        }
-      }
-    }
-
-    return names;
+    return state().find<T>();
   }
 
   // Exposed just for testing so that we can unload a given
   // module and remove it from the list of `ModuleBase`.
-  static Try<Nothing> unload(const std::string& moduleName);
+  static Try<Nothing> unload(const std::string& moduleName)
+  {
+    return state().unload(moduleName);
+  }
 
 private:
-  static void initialize();
+  // The global state of module manager.
+  class State
+  {
+  public:
+    Try<Nothing> load(const Modules& modules)
+    {
+      return loadManifest(modules);
+    }
 
-  static Try<Nothing> loadManifest(const Modules& modules);
+    Try<Nothing> load(const std::string& modulesDir);
 
-  static Try<Nothing> verifyModule(
-      const std::string& moduleName,
-      const ModuleBase* moduleBase);
+    template <typename T>
+    Try<T*> create(
+        const std::string& moduleName,
+        const Option<Parameters>& params = None())
+    {
+      synchronized (mutex) {
+        if (!moduleBases.contains(moduleName)) {
+          return Error(
+              "Module '" + moduleName + "' unknown");
+        }
 
-  // Allow multiple calls to `load()` by verifying that the modules with same
-  // name are indeed identical. Thus, multiple loadings of a module manifest
-  // are harmless.
-  static Try<Nothing> verifyIdenticalModule(
-      const std::string& libraryName,
-      const Modules::Library::Module& module,
-      const ModuleBase* base);
+        Module<T>* module = (Module<T>*) moduleBases[moduleName];
+        if (module->create == nullptr) {
+          return Error(
+              "Error creating module instance for '" + moduleName + "': "
+              "create() method not found");
+        }
 
-  static std::mutex mutex;
+        std::string expectedKind = kind<T>();
+        if (expectedKind != module->kind) {
+          return Error(
+              "Error creating module instance for '" + moduleName + "': "
+              "module is of kind '" + module->kind + "', but the requested "
+              "kind is '" + expectedKind + "'");
+        }
 
-  static hashmap<std::string, std::string> kindToVersion;
+        T* instance =
+          module->create(
+              params.isSome() ? params.get() : moduleParameters[moduleName]);
+        if (instance == nullptr) {
+          return Error(
+              "Error creating Module instance for '" + moduleName + "'");
+        }
+        return instance;
+      }
+    }
 
-  // Mapping from module name to the actual `ModuleBase`. If two
-  // modules from different libraries have the same name then the last
-  // one specified in the protobuf `Modules` will be picked.
-  static hashmap<std::string, ModuleBase*> moduleBases;
+    template <typename T>
+    bool contains(const std::string& moduleName)
+    {
+      synchronized (mutex) {
+        return (moduleBases.contains(moduleName) &&
+                moduleBases[moduleName]->kind == stringify(kind<T>()));
+      }
+    }
 
-  // Module-specific command-line parameters.
-  static hashmap<std::string, Parameters> moduleParameters;
+    template <typename T>
+    std::vector<std::string> find()
+    {
+      std::vector<std::string> names;
 
-  // A list of dynamic libraries to keep the object from getting
-  // destructed.
-  // NOTE: We do leak loaded dynamic libraries. This is to allow
-  // modules to make use of e.g., libprocess which otherwise could
-  // lead to situations where libprocess (which we depend on ourself)
-  // is unloaded before the destructor of below `static` is called.
-  // Unloading the dynamic library could then lead to the linker
-  // attempting to unload the libprocess loaded from the module which
-  // is not there anymore.
-  static hashmap<std::string, DynamicLibrary*> dynamicLibraries;
+      synchronized (mutex) {
+        foreachpair (const std::string& name, ModuleBase* base, moduleBases) {
+          if (base->kind == stringify(kind<T>())) {
+            names.push_back(name);
+          }
+        }
+      }
 
-  // Module to library name mapping.
-  static hashmap<std::string, std::string> moduleLibraries;
+      return names;
+    }
+
+    Try<Nothing> unload(const std::string& moduleName);
+
+  private:
+    void initialize();
+
+    Try<Nothing> loadManifest(const Modules& modules);
+
+    Try<Nothing> verifyModule(
+        const std::string& moduleName,
+        const ModuleBase* moduleBase);
+
+    // Allow multiple calls to `load()` by verifying that the modules with same
+    // name are indeed identical. Thus, multiple loadings of a module manifest
+    // are harmless.
+    Try<Nothing> verifyIdenticalModule(
+        const std::string& libraryName,
+        const Modules::Library::Module& module,
+        const ModuleBase* base);
+
+    std::mutex mutex;
+
+    // TODO(karya): MESOS-4917: Cleanup by introducing additional data
+    // structures to avoid keeping multiple mappings from module names.
+    hashmap<std::string, std::string> kindToVersion;
+
+    // Mapping from module name to the actual `ModuleBase`. If two
+    // modules from different libraries have the same name then the last
+    // one specified in the protobuf `Modules` will be picked.
+    hashmap<std::string, ModuleBase*> moduleBases;
+
+    // Module-specific command-line parameters.
+    hashmap<std::string, Parameters> moduleParameters;
+
+    // A list of dynamic libraries to keep the object from getting
+    // destructed.
+    // NOTE: We do leak loaded dynamic libraries. This is to allow
+    // modules to make use of e.g., libprocess which otherwise could
+    // lead to situations where libprocess (which we depend on ourself)
+    // is unloaded before the destructor of below `static` is called.
+    // Unloading the dynamic library could then lead to the linker
+    // attempting to unload the libprocess loaded from the module which
+    // is not there anymore.
+    hashmap<std::string, DynamicLibrary*> dynamicLibraries;
+
+    // Module to library name mapping.
+    hashmap<std::string, std::string> moduleLibraries;
+  };
+
+  // Returns the global State.
+  static State& state();
 };
 
 } // namespace modules {
