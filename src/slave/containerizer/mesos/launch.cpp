@@ -104,8 +104,6 @@ namespace mesos {
 namespace internal {
 namespace slave {
 
-const string MesosContainerizerLaunch::NAME = "launch";
-
 
 MesosContainerizerLaunch::Flags::Flags()
 {
