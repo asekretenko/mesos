@@ -51,6 +51,8 @@
 #include "common/recordio.hpp"
 #include "common/validation.hpp"
 
+#include "executor/constants.hpp"
+
 #include "internal/devolve.hpp"
 
 #include "logging/flags.hpp"
@@ -93,10 +95,6 @@ using ::recordio::Decoder;
 namespace mesos {
 namespace v1 {
 namespace executor {
-
-// TODO(josephw): Move this default into a header which can be loaded
-// by tests. Also, consider making this heartbeat interval configurable.
-extern const Duration DEFAULT_HEARTBEAT_CALL_INTERVAL = Minutes(30);
 
 
 class ShutdownProcess : public process::Process<ShutdownProcess>
