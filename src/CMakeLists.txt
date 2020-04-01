@@ -115,10 +115,7 @@ else ()
   set(MESOS_PROTOBUFS_LINKAGE SHARED)
 endif ()
 
-add_library(
-  mesos-protobufs ${MESOS_PROTOBUFS_LINKAGE}
-  ${PUBLIC_PROTOBUF_SRC}
-  ${INTERNAL_PROTOBUF_SRC})
+add_library(mesos-protobufs ${MESOS_PROTOBUFS_LINKAGE} ${PUBLIC_PROTOBUF_SRC})
 
 target_link_libraries(mesos-protobufs PUBLIC
   protobuf
@@ -139,6 +136,24 @@ if(WIN32)
     PRIVATE -D"MESOS_PROTOBUF_DLLEXPORT_DECL=__declspec(dllexport)"
   )
 endif()
+
+add_library(
+  mesos-protobufs-internal ${MESOS_PROTOBUFS_LINKAGE}
+  ${INTERNAL_PROTOBUF_SRC})
+
+target_link_libraries(mesos-protobufs-internal PUBLIC mesos-protobufs)
+
+if(WIN32)
+  # This results in protobuf headers being compiled with __declspec(dllexport)
+  # when building `mesos-protobufs.dll`, which is needed for all the
+  # static data (default instances, etc.) to be exported from
+  # `mesos-protobufs.dll`.
+  target_compile_definitions(
+    mesos-protobufs-internal
+    PRIVATE -D"MESOS_PROTOBUF_DLLEXPORT_DECL=__declspec(dllexport)"
+  )
+endif()
+
 
 # BUILD JAVA ARTIFACTS.
 #######################
@@ -634,7 +649,7 @@ target_link_libraries(
   mesos-base PUBLIC
   process
   sasl2
-  mesos-protobufs)
+  mesos-protobufs-internal)
 
 if (ENABLE_PRECOMPILED_HEADERS)
   set_target_properties(
