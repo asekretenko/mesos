@@ -34,9 +34,6 @@ namespace mesos {
 namespace internal {
 namespace slave {
 
-const string MesosContainerizerMount::NAME = "mount";
-const string MesosContainerizerMount::MAKE_RSLAVE = "make-rslave";
-
 
 MesosContainerizerMount::Flags::Flags()
 {
@@ -63,9 +60,11 @@ int MesosContainerizerMount::execute()
     return 1;
   }
 
-  if (flags.operation.get() == MAKE_RSLAVE) {
+  if (flags.operation.get().compare(
+          MESOS_CONTAINERIZER_MOUNT_MAKE_RSLAVE_OPERATION) == 0) {
     if (flags.path.isNone()) {
-      cerr << "Flag --path is required for " << MAKE_RSLAVE << endl;
+      cerr << "Flag --path is required for "
+           << MESOS_CONTAINERIZER_MOUNT_MAKE_RSLAVE_OPERATION << endl;
       return 1;
     }
 

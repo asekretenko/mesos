@@ -31,12 +31,15 @@ namespace slave {
 // - mount program only handles mounts that is recorded in /etc/mtab and
 //   /etc/fstab, and ignores mounts that are done via mount syscall.
 //   We need this subcommand so we can effect all mounts.
+
+constexpr const char MESOS_CONTAINERIZER_MOUNT_COMMAND[] = "mount";
+constexpr const char MESOS_CONTAINERIZER_MOUNT_MAKE_RSLAVE_OPERATION[] =
+  "make-rslave";
+
+
 class MesosContainerizerMount : public Subcommand
 {
 public:
-  static const std::string NAME;
-  static const std::string MAKE_RSLAVE;
-
   struct Flags : public virtual flags::FlagsBase
   {
     Flags();
@@ -45,7 +48,7 @@ public:
     Option<std::string> path;
   };
 
-  MesosContainerizerMount() : Subcommand(NAME) {}
+  MesosContainerizerMount() : Subcommand(MESOS_CONTAINERIZER_MOUNT_COMMAND) {}
 
   Flags flags;
 
