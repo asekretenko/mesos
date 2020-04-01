@@ -1741,8 +1741,8 @@ Future<Nothing> DockerContainerizerProcess::update(
         return Continue();
       });
 
-  return inspectLoop
-    .then(defer(self(), &Self::_update, containerId, resourceRequests, lambda::_1));
+  return inspectLoop.then(
+      defer(self(), &Self::_update, containerId, resourceRequests, lambda::_1));
 #else
   return Nothing();
 #endif // __linux__
