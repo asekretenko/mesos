@@ -35,7 +35,7 @@ namespace mesos {
 namespace master {
 namespace detector {
 
-extern const Duration MASTER_DETECTOR_ZK_SESSION_TIMEOUT;
+constexpr const Duration MASTER_DETECTOR_ZK_SESSION_TIMEOUT = Seconds(10);
 
 // Forward declarations.
 class ZooKeeperMasterDetectorProcess;

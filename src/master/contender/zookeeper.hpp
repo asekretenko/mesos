@@ -33,8 +33,7 @@ namespace mesos {
 namespace master {
 namespace contender {
 
-extern const Duration MASTER_CONTENDER_ZK_SESSION_TIMEOUT;
-
+constexpr const Duration MASTER_CONTENDER_ZK_SESSION_TIMEOUT = Seconds(10);
 
 class ZooKeeperMasterContenderProcess;
 
