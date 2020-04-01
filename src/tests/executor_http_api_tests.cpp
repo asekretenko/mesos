@@ -32,6 +32,8 @@
 #include "common/http.hpp"
 #include "common/recordio.hpp"
 
+#include "executor/constants.hpp"
+
 #include "master/master.hpp"
 
 #include "master/detector/standalone.hpp"
@@ -80,16 +82,6 @@ using testing::Eq;
 using testing::WithParamInterface;
 
 namespace mesos {
-namespace v1 {
-namespace executor {
-
-// Forward defined constant found in `executor/executor.cpp`.
-// TODO(josephw): Remove this when this constant is moved into a header.
-extern const Duration DEFAULT_HEARTBEAT_CALL_INTERVAL;
-
-} // namespace executor {
-} // namespace v1 {
-
 namespace internal {
 namespace tests {
 
@@ -1233,7 +1225,8 @@ TEST_F(ExecutorHttpApiTest, HeartbeatCalls)
         FutureArg<0>(&expectedHeartbeat),
         Return(process::http::Accepted())));
 
-  Clock::advance(mesos::v1::executor::DEFAULT_HEARTBEAT_CALL_INTERVAL);
+  Clock::advance(mesos::v1::executor::defaultHeartbeatCallInterval());
+
   AWAIT_READY(expectedHeartbeat);
 
   contentType = expectedHeartbeat->headers.get("Content-Type");

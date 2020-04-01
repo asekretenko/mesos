@@ -1102,6 +1102,7 @@ libmesos_no_3rdparty_la_SOURCES +=					\
   examples/test_module.hpp						\
   examples/utils.hpp							\
   exec/exec.cpp								\
+  executor/constants.hpp						\
   executor/executor.cpp							\
   executor/v0_v1executor.cpp						\
   executor/v0_v1executor.hpp						\
