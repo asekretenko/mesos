@@ -42,15 +42,25 @@ using process::http::authentication::Principal;
 namespace mesos {
 namespace authorization {
 
-// Set of endpoint whose access is protected with the authorization
-// action `GET_ENDPOINTS_WITH_PATH`.
-hashset<string> AUTHORIZABLE_ENDPOINTS{
+bool isAuthorizableEndpoint(const string& endpoint)
+{
+  // TODO(asekretenko): Make this constexpr when we no longer support
+  // older platforms on which std::initializer_list is not a literal.
+  const std::initializer_list<const char*> authorizable{
     "/containers",
     "/containerizer/debug",
     "/files/debug",
     "/logging/toggle",
     "/metrics/snapshot",
     "/monitor/statistics"};
+
+  return std::find_if(
+             authorizable.begin(),
+             authorizable.end(),
+             [&endpoint](const char* item) {
+               return endpoint.compare(item) == 0;
+             }) != authorizable.end();
+}
 
 
 Future<bool> collectAuthorizations(const vector<Future<bool>>& authorizations)
@@ -118,7 +128,7 @@ const AuthorizationCallbacks createAuthorizationCallbacks(
       const Option<Principal>& principal) -> Future<bool> {
         const string path = httpRequest.url.path;
 
-        if (!AUTHORIZABLE_ENDPOINTS.contains(path)) {
+        if (!isAuthorizableEndpoint(path)) {
           return Failure(
               "Endpoint '" + path + "' is not an authorizable endpoint");
         }

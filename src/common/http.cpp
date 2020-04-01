@@ -1257,7 +1257,7 @@ process::Future<bool> authorizeEndpoint(
     return Failure("Unexpected request method '" + method + "'");
   }
 
-  if (!authorization::AUTHORIZABLE_ENDPOINTS.contains(endpoint)) {
+  if (!authorization::isAuthorizableEndpoint(endpoint)) {
     return Failure(
         "Endpoint '" + endpoint + "' is not an authorizable endpoint.");
   }
