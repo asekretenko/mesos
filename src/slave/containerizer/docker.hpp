@@ -46,19 +46,12 @@ namespace slave {
 
 // Prefix used to name Docker containers in order to distinguish those
 // created by Mesos from those created manually.
-extern const std::string DOCKER_NAME_PREFIX;
+constexpr const char DOCKER_NAME_PREFIX[] = "mesos-";
 
 // Separator used to compose docker container name, which consists
 // of the name prefix, ContainerID, and possibly the SlaveID depending
 // on the version of Mesos used to create the container.
-extern const std::string DOCKER_NAME_SEPERATOR;
-
-// Directory that stores all the symlinked sandboxes that is mapped
-// into Docker containers. This is a relative directory that will
-// joined with the slave path. Only sandbox paths that contains a
-// colon will be symlinked due to the limitation of the Docker CLI.
-extern const std::string DOCKER_SYMLINK_DIRECTORY;
-
+constexpr const char DOCKER_NAME_SEPERATOR[] = ".";
 
 // Forward declaration.
 class DockerContainerizerProcess;
@@ -329,7 +322,7 @@ private:
 
     static std::string name(const ContainerID& id)
     {
-      return DOCKER_NAME_PREFIX + stringify(id);
+      return std::string(DOCKER_NAME_PREFIX) + stringify(id);
     }
 
     Container(const ContainerID& id)
