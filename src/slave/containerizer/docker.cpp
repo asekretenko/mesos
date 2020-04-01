@@ -97,15 +97,10 @@ namespace mesos {
 namespace internal {
 namespace slave {
 
-// Declared in header, see explanation there.
-const string DOCKER_NAME_PREFIX = "mesos-";
-
-
-// Declared in header, see explanation there.
-const string DOCKER_NAME_SEPERATOR = ".";
-
-
-// Declared in header, see explanation there.
+// Directory that stores all the symlinked sandboxes that is mapped
+// into Docker containers. This is a relative directory that will
+// joined with the slave path. Only sandbox paths that contains a
+// colon will be symlinked due to the limitation of the Docker CLI.
 const string DOCKER_SYMLINK_DIRECTORY = path::join("docker", "links");
 
 
@@ -127,9 +122,10 @@ Option<ContainerID> parse(const Docker::Container& container)
   if (strings::startsWith(container.name, DOCKER_NAME_PREFIX)) {
     name = strings::remove(
         container.name, DOCKER_NAME_PREFIX, strings::PREFIX);
-  } else if (strings::startsWith(container.name, "/" + DOCKER_NAME_PREFIX)) {
+  } else if (strings::startsWith(
+                 container.name, string("/") + DOCKER_NAME_PREFIX)) {
     name = strings::remove(
-        container.name, "/" + DOCKER_NAME_PREFIX, strings::PREFIX);
+        container.name, string("/") + DOCKER_NAME_PREFIX, strings::PREFIX);
   }
 
   if (name.isSome()) {
