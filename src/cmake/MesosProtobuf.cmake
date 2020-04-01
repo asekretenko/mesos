@@ -101,6 +101,16 @@ function(PROTOC_GENERATE)
     set(JAVA_OUT ${MESOS_BIN_SRC_DIR}/java/generated)
   endif()
 
+  if (WIN32)
+    if (PROTOC_INTERNAL)
+      set(CPP_OUT_OPTIONS "dllexport_decl=MESOS_INTERNAL_PROTOBUF_DLLEXPORT_DECL:")
+    else()
+      set(CPP_OUT_OPTIONS "dllexport_decl=MESOS_PUBLIC_PROTOBUF_DLLEXPORT_DECL:")
+    endif()
+  else()
+    set(CPP_OUT_OPTIONS)
+  endif()
+
   get_target_property(
     PROTOBUF_INCLUDE_DIR
     protobuf
@@ -109,12 +119,8 @@ function(PROTOC_GENERATE)
   set(PROTOC_OPTIONS
     -I${MESOS_PUBLIC_INCLUDE_DIR}
     -I${MESOS_SRC_DIR}
-    -I${PROTOBUF_INCLUDE_DIR})
-  if (WIN32)
-    list(APPEND PROTOC_OPTIONS --cpp_out=dllexport_decl=MESOS_PROTOBUF_DLLEXPORT_DECL:${CPP_OUT})
-  else()
-    list(APPEND PROTOC_OPTIONS --cpp_out=:${CPP_OUT})
-  endif()
+    -I${PROTOBUF_INCLUDE_DIR}
+    --cpp_out=${CPP_OUT_OPTIONS}${CPP_OUT})
 
   foreach (LIB_PROTO_PATH IN LISTS LIB_PROTO_PATHS)
     list(APPEND PROTOC_OPTIONS -I${LIB_PROTO_PATH})
