@@ -4987,21 +4987,21 @@ TEST_F(MasterTest, StateEndpoint)
 
   EXPECT_EQ(MESOS_VERSION, state.values["version"]);
 
-  if (build::GIT_SHA.isSome()) {
-    EXPECT_EQ(build::GIT_SHA.get(), state.values["git_sha"]);
+  if (build::git_sha().isSome()) {
+    EXPECT_EQ(build::git_sha().get(), state.values["git_sha"]);
   }
 
-  if (build::GIT_BRANCH.isSome()) {
-    EXPECT_EQ(build::GIT_BRANCH.get(), state.values["git_branch"]);
+  if (build::git_branch().isSome()) {
+    EXPECT_EQ(build::git_branch().get(), state.values["git_branch"]);
   }
 
-  if (build::GIT_TAG.isSome()) {
-    EXPECT_EQ(build::GIT_TAG.get(), state.values["git_tag"]);
+  if (build::git_tag().isSome()) {
+    EXPECT_EQ(build::git_tag().get(), state.values["git_tag"]);
   }
 
-  EXPECT_EQ(build::DATE, state.values["build_date"]);
-  EXPECT_EQ(build::TIME, state.values["build_time"]);
-  EXPECT_EQ(build::USER, state.values["build_user"]);
+  EXPECT_EQ(build::date(), state.values["build_date"]);
+  EXPECT_EQ(build::time(), state.values["build_time"]);
+  EXPECT_EQ(build::user(), state.values["build_user"]);
 
   ASSERT_TRUE(state.values["start_time"].is<JSON::Number>());
   EXPECT_EQ(

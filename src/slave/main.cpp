@@ -377,15 +377,15 @@ int main(int argc, char** argv)
   os::setenv("LIBPROCESS_MEMORY_PROFILING", stringify(flags.memory_profiling));
 
   // Log build information.
-  LOG(INFO) << "Build: " << build::DATE << " by " << build::USER;
+  LOG(INFO) << "Build: " << build::date() << " by " << build::user();
   LOG(INFO) << "Version: " << MESOS_VERSION;
 
-  if (build::GIT_TAG.isSome()) {
-    LOG(INFO) << "Git tag: " << build::GIT_TAG.get();
+  if (build::git_tag().isSome()) {
+    LOG(INFO) << "Git tag: " << build::git_tag().get();
   }
 
-  if (build::GIT_SHA.isSome()) {
-    LOG(INFO) << "Git SHA: " << build::GIT_SHA.get();
+  if (build::git_sha().isSome()) {
+    LOG(INFO) << "Git SHA: " << build::git_sha().get();
   }
 
 #ifdef __linux__

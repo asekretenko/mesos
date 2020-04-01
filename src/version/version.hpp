@@ -34,21 +34,21 @@ inline JSON::Object version()
   JSON::Object object;
   object.values["version"] = MESOS_VERSION;
 
-  if (build::GIT_SHA.isSome()) {
-    object.values["git_sha"] = build::GIT_SHA.get();
+  if (build::git_sha().isSome()) {
+    object.values["git_sha"] = build::git_sha().get();
   }
 
-  if (build::GIT_BRANCH.isSome()) {
-    object.values["git_branch"] = build::GIT_BRANCH.get();
+  if (build::git_branch().isSome()) {
+    object.values["git_branch"] = build::git_branch().get();
   }
 
-  if (build::GIT_TAG.isSome()) {
-    object.values["git_tag"] = build::GIT_TAG.get();
+  if (build::git_tag().isSome()) {
+    object.values["git_tag"] = build::git_tag().get();
   }
 
-  object.values["build_date"] = build::DATE;
-  object.values["build_time"] = build::TIME;
-  object.values["build_user"] = build::USER;
+  object.values["build_date"] = build::date();
+  object.values["build_time"] = build::time();
+  object.values["build_user"] = build::user();
 
   return object;
 }

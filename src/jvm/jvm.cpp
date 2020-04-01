@@ -70,7 +70,7 @@ Try<Jvm*> Jvm::create(
   Option<std::string> libJvmPath = os::getenv("JAVA_JVM_LIBRARY");
 
   if (libJvmPath.isNone()) {
-    libJvmPath = mesos::internal::build::JAVA_JVM_LIBRARY;
+    libJvmPath = mesos::internal::build::java_jvm_library();
   }
 
   static DynamicLibrary* libJvm = new DynamicLibrary();
