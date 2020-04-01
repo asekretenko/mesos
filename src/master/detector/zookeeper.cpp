@@ -50,8 +50,6 @@ namespace mesos {
 namespace master {
 namespace detector {
 
-const Duration MASTER_DETECTOR_ZK_SESSION_TIMEOUT = Seconds(10);
-
 class ZooKeeperMasterDetectorProcess
   : public Process<ZooKeeperMasterDetectorProcess>
 {

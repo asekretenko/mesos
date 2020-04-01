@@ -39,9 +39,6 @@ namespace mesos {
 namespace master {
 namespace contender {
 
-const Duration MASTER_CONTENDER_ZK_SESSION_TIMEOUT = Seconds(10);
-
-
 class ZooKeeperMasterContenderProcess
   : public Process<ZooKeeperMasterContenderProcess>
 {
