@@ -344,6 +344,14 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES MSVC)
     /w44244
     # C4267 is a possible loss of data warning when converting from `size_t`.
     /w44267)
+
+  if (BUILD_SHARED_LIBS)
+    # Disable C4251 "class needs to have dll-interface" warning. This one
+    # is triggered _en_masse_ by generated protobuf headers (which import
+    # instantiated templates from DLLs). See "Notes on compiler warnings" in
+    # https://github.com/protocolbuffers/protobuf/blob/master/cmake/README.md
+    add_compile_options(/wd4251)
+  endif()
 endif ()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES Clang)
