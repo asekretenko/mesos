@@ -124,7 +124,7 @@ target_link_libraries(mesos-protobufs PUBLIC
 target_include_directories(
   mesos-protobufs
   PUBLIC
-  ${MESOS_PROTOBUF_HEADER_INCLUDE_DIRS})
+  ${MESOS_PUBLIC_PROTOBUF_HEADER_INCLUDE_DIRS})
 
 if(WIN32)
   # This results in protobuf headers being compiled with __declspec(dllexport)
@@ -133,7 +133,8 @@ if(WIN32)
   # `mesos-protobufs.dll`.
   target_compile_definitions(
     mesos-protobufs
-    PRIVATE -D"MESOS_PROTOBUF_DLLEXPORT_DECL=__declspec(dllexport)"
+    PRIVATE -D"MESOS_PUBLIC_PROTOBUF_DLLEXPORT_DECL=__declspec(dllexport)"
+    INTERFACE -D"MESOS_PUBLIC_PROTOBUF_DLLEXPORT_DECL=__declspec(dllimport)"
   )
 endif()
 
@@ -143,14 +144,20 @@ add_library(
 
 target_link_libraries(mesos-protobufs-internal PUBLIC mesos-protobufs)
 
+target_include_directories(
+  mesos-protobufs-internal
+  PUBLIC
+  ${MESOS_INTERNAL_PROTOBUF_HEADER_INCLUDE_DIRS})
+
 if(WIN32)
   # This results in protobuf headers being compiled with __declspec(dllexport)
-  # when building `mesos-protobufs.dll`, which is needed for all the
+  # when building `mesos-protobufs-internal.dll`, which is needed for all the
   # static data (default instances, etc.) to be exported from
-  # `mesos-protobufs.dll`.
+  # `mesos-protobufs-internal.dll`.
   target_compile_definitions(
     mesos-protobufs-internal
-    PRIVATE -D"MESOS_PROTOBUF_DLLEXPORT_DECL=__declspec(dllexport)"
+    PRIVATE -D"MESOS_INTERNAL_PROTOBUF_DLLEXPORT_DECL=__declspec(dllexport)"
+    INTERFACE -D"MESOS_INTERNAL_PROTOBUF_DLLEXPORT_DECL=__declspec(dllimport)"
   )
 endif()
 
