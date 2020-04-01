@@ -44,19 +44,13 @@ using namespace mesos;
 using namespace mesos::internal;
 using namespace mesos::modules;
 
-std::mutex ModuleManager::mutex;
 
-// TODO(karya): MESOS-4917: Replace the following non-pod static variables with
-// pod equivalents. Cleanup further by introducing additional data structures to
-// avoid keeping multiple mappings from module names.
-hashmap<string, string> ModuleManager::kindToVersion;
-hashmap<string, ModuleBase*> ModuleManager::moduleBases;
-hashmap<string, Parameters> ModuleManager::moduleParameters;
-hashmap<string, string> ModuleManager::moduleLibraries;
-hashmap<string, DynamicLibrary*> ModuleManager::dynamicLibraries;
+ModuleManager::State& ModuleManager::state() {
+  static ModuleManager::State* const state_ {new ModuleManager::State()};
+  return *state_;
+}
 
-
-void ModuleManager::initialize()
+void ModuleManager::State::initialize()
 {
   // ATTENTION: Every time a Mesos developer breaks compatibility with
   // a module kind type, this table needs to be updated.
@@ -113,7 +107,7 @@ void ModuleManager::initialize()
 
 // For testing only. Unload a given module and remove it from the list
 // of ModuleBases.
-Try<Nothing> ModuleManager::unload(const string& moduleName)
+Try<Nothing> ModuleManager::State::unload(const string& moduleName)
 {
   synchronized (mutex) {
     if (!moduleBases.contains(moduleName)) {
@@ -130,7 +124,7 @@ Try<Nothing> ModuleManager::unload(const string& moduleName)
 
 
 // TODO(karya): Show library author info for failed library/module.
-Try<Nothing> ModuleManager::verifyModule(
+Try<Nothing> ModuleManager::State::verifyModule(
     const string& moduleName,
     const ModuleBase* moduleBase)
 {
@@ -210,7 +204,7 @@ Try<Nothing> ModuleManager::verifyModule(
 //
 // TODO(karya): MESOS-4960: Enhance the module API to allow module developers to
 // express whether the modules are multi-instantiable and thread-safe.
-Try<Nothing> ModuleManager::verifyIdenticalModule(
+Try<Nothing> ModuleManager::State::verifyIdenticalModule(
     const string& libraryName,
     const Modules::Library::Module& module,
     const ModuleBase* base)
@@ -267,7 +261,7 @@ Try<Nothing> ModuleManager::verifyIdenticalModule(
 }
 
 
-Try<Nothing> ModuleManager::loadManifest(const Modules& modules)
+Try<Nothing> ModuleManager::State::loadManifest(const Modules& modules)
 {
   synchronized (mutex) {
     initialize();
@@ -356,7 +350,7 @@ Try<Nothing> ModuleManager::loadManifest(const Modules& modules)
 // We load the module manifests sequentially in an alphabetical order. If an
 // error is encountered while processing a particular manifest, we do not load
 // the remaining manifests and exit with the appropriate error message.
-Try<Nothing> ModuleManager::load(const string& modulesDir)
+Try<Nothing> ModuleManager::State::load(const string& modulesDir)
 {
   Try<list<string>> moduleManifests = os::ls(modulesDir);
   if (moduleManifests.isError()) {
