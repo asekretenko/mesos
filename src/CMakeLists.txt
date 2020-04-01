@@ -129,6 +129,16 @@ target_include_directories(
   PUBLIC
   ${MESOS_PROTOBUF_HEADER_INCLUDE_DIRS})
 
+if(WIN32)
+  # This results in protobuf headers being compiled with __declspec(dllexport)
+  # when building `mesos-protobufs.dll`, which is needed for all the
+  # static data (default instances, etc.) to be exported from
+  # `mesos-protobufs.dll`.
+  target_compile_definitions(
+    mesos-protobufs
+    PRIVATE -DMESOS_PROTOBUF_DLLEXPORT_DECL=__declspec(dllexport)
+  )
+endif()
 
 # BUILD JAVA ARTIFACTS.
 #######################
