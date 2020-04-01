@@ -110,7 +110,7 @@ endif ()
 # Unfortunately, this is not supported on Windows. But because modules are not
 # yet supported either, for now we can build it statically.
 if (WIN32)
-	set(MESOS_PROTOBUFS_LINKAGE STATIC)
+	set(MESOS_PROTOBUFS_LINKAGE ${LIBRARY_LINKAGE})
 else ()
   set(MESOS_PROTOBUFS_LINKAGE SHARED)
 endif ()
@@ -136,7 +136,7 @@ if(WIN32)
   # `mesos-protobufs.dll`.
   target_compile_definitions(
     mesos-protobufs
-    PRIVATE -DMESOS_PROTOBUF_DLLEXPORT_DECL=__declspec(dllexport)
+    PRIVATE -D"MESOS_PROTOBUF_DLLEXPORT_DECL=__declspec(dllexport)"
   )
 endif()
 
