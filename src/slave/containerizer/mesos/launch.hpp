@@ -30,11 +30,11 @@ namespace mesos {
 namespace internal {
 namespace slave {
 
+constexpr const char MESOS_CONTAINERIZER_LAUNCH_COMMAND[] = "launch";
+
 class MesosContainerizerLaunch : public Subcommand
 {
 public:
-  static const std::string NAME;
-
   struct Flags : public virtual flags::FlagsBase
   {
     Flags();
@@ -49,7 +49,7 @@ public:
 #endif // __linux__
   };
 
-  MesosContainerizerLaunch() : Subcommand(NAME) {}
+  MesosContainerizerLaunch() : Subcommand(MESOS_CONTAINERIZER_LAUNCH_COMMAND) {}
 
   Flags flags;
 
