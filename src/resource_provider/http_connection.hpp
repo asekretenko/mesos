@@ -358,7 +358,7 @@ protected:
 
     CHECK(state == State::SUBSCRIBING || state == State::SUBSCRIBED) << state;
 
-    if (response.code == process::http::Status::OK) {
+    if (response.code == process::http::status::OK) {
       // Only SUBSCRIBE call should get a "200 OK" response.
       CHECK_EQ(Call::SUBSCRIBE, call.type());
       CHECK_EQ(process::http::Response::PIPE, response.type);
@@ -389,7 +389,7 @@ protected:
       return Nothing();
     }
 
-    if (response.code == process::http::Status::ACCEPTED) {
+    if (response.code == process::http::status::ACCEPTED) {
       // Only non SUBSCRIBE calls should get a "202 Accepted" response.
       CHECK_NE(Call::SUBSCRIBE, call.type());
       return Nothing();
@@ -401,8 +401,8 @@ protected:
       state = State::CONNECTED;
     }
 
-    if (response.code == process::http::Status::SERVICE_UNAVAILABLE ||
-        response.code == process::http::Status::NOT_FOUND) {
+    if (response.code == process::http::status::SERVICE_UNAVAILABLE ||
+        response.code == process::http::status::NOT_FOUND) {
       return process::Failure(
           "Received '" + response.status + "' (" + response.body + ")");
     }

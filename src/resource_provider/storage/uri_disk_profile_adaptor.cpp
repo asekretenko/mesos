@@ -181,7 +181,7 @@ void UriDiskProfileAdaptorProcess::poll()
 void UriDiskProfileAdaptorProcess::_poll(const Future<http::Response>& response)
 {
   if (response.isReady()) {
-    if (response->code == http::Status::OK) {
+    if (response->code == http::status::OK) {
       __poll(response->body);
     } else {
       __poll(Error("Unexpected HTTP response '" + response->status + "'"));

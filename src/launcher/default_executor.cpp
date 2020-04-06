@@ -591,7 +591,7 @@ protected:
       // Check if we received a 200 OK response for the
       // `LAUNCH_CONTAINER` call. Skip the rest of the container
       // initialization if this is not the case.
-      if (response.code != process::http::Status::OK) {
+      if (response.code != process::http::status::OK) {
         LOG(ERROR) << "Received '" << response.status << "' (" << response.body
                    << ") while launching child container " << containerId
                    << " of task '" << taskId << "'";
@@ -837,7 +837,7 @@ protected:
     // subscribed again after an agent process failure and started to
     // wait for the child container. In that case, reestablish
     // the connection.
-    if (response->code == process::http::Status::SERVICE_UNAVAILABLE) {
+    if (response->code == process::http::status::SERVICE_UNAVAILABLE) {
       LOG(WARNING) << "Received '" << response->status << "' ("
                    << response->body << ") waiting on child container "
                    << container->containerId << " of task '" << taskId << "'";
@@ -849,8 +849,8 @@ protected:
     // `WAIT_NESTED_CONTAINER` call with an error. Note that several race
     // conditions can cause a 404 NOT FOUND response, which shouldn't be
     // treated as an error.
-    if (response->code != process::http::Status::NOT_FOUND &&
-        response->code != process::http::Status::OK) {
+    if (response->code != process::http::status::NOT_FOUND &&
+        response->code != process::http::status::OK) {
       LOG(ERROR) << "Received '" << response->status << "' ("
                  << response->body << ") waiting on child container "
                  << container->containerId << " of task '" << taskId << "'";
@@ -879,7 +879,7 @@ protected:
     Option<TaskStatus::Reason> reason;
     Option<TaskResourceLimitation> limitation;
 
-    if (response->code == process::http::Status::NOT_FOUND) {
+    if (response->code == process::http::status::NOT_FOUND) {
       // The agent can respond with 404 NOT FOUND due to a failed container
       // launch or due to a race condition.
 
@@ -1219,7 +1219,7 @@ protected:
 
     return post(None(), call)
       .then([=](const Response& response) -> Future<Nothing> {
-        if (response.code != process::http::Status::OK) {
+        if (response.code != process::http::status::OK) {
           return Failure(
               stringify("The agent failed to send signal") +
               " " + strsignal(signal) + " (" + stringify(signal) + ")" +

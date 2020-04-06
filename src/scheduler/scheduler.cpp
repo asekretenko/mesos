@@ -645,7 +645,7 @@ protected:
       return;
     }
 
-    if (response->code == process::http::Status::OK) {
+    if (response->code == process::http::status::OK) {
       // Only SUBSCRIBE call should get a "200 OK" response.
       CHECK_EQ(Call::SUBSCRIBE, call.type());
       CHECK_EQ(response->type, process::http::Response::PIPE);
@@ -676,7 +676,7 @@ protected:
       return;
     }
 
-    if (response->code == process::http::Status::ACCEPTED) {
+    if (response->code == process::http::status::ACCEPTED) {
       // Only non SUBSCRIBE calls should get a "202 Accepted" response.
       CHECK_NE(Call::SUBSCRIBE, call.type());
       return;
@@ -689,7 +689,7 @@ protected:
       state = CONNECTED;
     }
 
-    if (response->code == process::http::Status::SERVICE_UNAVAILABLE) {
+    if (response->code == process::http::status::SERVICE_UNAVAILABLE) {
       // This could happen if the master hasn't realized it is the leader yet
       // or is still in the process of recovery.
       LOG(WARNING) << "Received '" << response->status << "' ("
@@ -697,7 +697,7 @@ protected:
       return;
     }
 
-    if (response->code == process::http::Status::NOT_FOUND) {
+    if (response->code == process::http::status::NOT_FOUND) {
       // This could happen if the master libprocess process has not yet set up
       // HTTP routes.
       LOG(WARNING) << "Received '" << response->status << "' ("
@@ -705,7 +705,7 @@ protected:
       return;
     }
 
-    if (response->code == process::http::Status::TEMPORARY_REDIRECT) {
+    if (response->code == process::http::status::TEMPORARY_REDIRECT) {
       // This could happen if the detector detects a new leading master before
       // master itself realizes it (e.g., ZK watch delay).
       LOG(WARNING) << "Received '" << response->status << "' ("
@@ -751,7 +751,7 @@ protected:
 
     result.set_status_code(response.code);
 
-    if (response.code == process::http::Status::ACCEPTED) {
+    if (response.code == process::http::status::ACCEPTED) {
       // "202 Accepted" responses are asynchronously processed, so the body
       // should be empty.
       if (!response.body.empty()) {
@@ -759,7 +759,7 @@ protected:
                      << " unexpectedly included body: '" << response.body
                      << "'";
       }
-    } else if (response.code == process::http::Status::OK) {
+    } else if (response.code == process::http::status::OK) {
       if (!response.body.empty()) {
         Try<Response> deserializedResponse =
           deserialize<Response>(contentType, response.body);

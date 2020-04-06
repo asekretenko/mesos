@@ -5853,7 +5853,7 @@ TEST_P(
 
   // The master should respond with '202 Accepted' and an
   // empty body (response field unset).
-  ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+  ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
   ASSERT_FALSE(result->has_response());
 
   AWAIT_READY(reconciliationUpdate);

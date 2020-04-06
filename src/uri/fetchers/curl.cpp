@@ -192,10 +192,10 @@ Future<Nothing> CurlFetcherPlugin::fetch(
         return Failure("Unexpected output from 'curl': " + output.get());
       }
 
-      if (code.get() != http::Status::OK) {
+      if (code.get() != http::status::OK) {
         return Failure(
             "Unexpected HTTP response code: " +
-            http::Status::string(code.get()));
+            http::status::string(code.get()));
       }
 
       return Nothing();

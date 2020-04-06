@@ -201,7 +201,7 @@ TEST_P(OperationReconciliationTest, PendingOperation)
 
   // The master should respond with '202 Accepted' and an
   // empty body (response field unset).
-  ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+  ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
   EXPECT_FALSE(result->has_response());
 
   AWAIT_READY(reconciliationUpdate);
@@ -337,7 +337,7 @@ TEST_P(OperationReconciliationTest, PendingAndFinishedOperations)
 
   // The master should respond with '202 Accepted' and an
   // empty body (response field unset).
-  ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+  ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
   EXPECT_FALSE(result->has_response());
 
   AWAIT_READY(reconciliationUpdate1);
@@ -434,7 +434,7 @@ TEST_P_TEMP_DISABLED_ON_WINDOWS(
 
   // The master should respond with '202 Accepted' and an
   // empty body (response field unset).
-  ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+  ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
   EXPECT_FALSE(result->has_response());
 
   AWAIT_READY(reconciliationUpdate);
@@ -509,7 +509,7 @@ TEST_P(OperationReconciliationTest, UnknownOperationKnownAgent)
 
   // The master should respond with '202 Accepted' and an
   // empty body (response field unset).
-  ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+  ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
   EXPECT_FALSE(result->has_response());
 
   AWAIT_READY(reconciliationUpdate);
@@ -610,7 +610,7 @@ TEST_P(OperationReconciliationTest, UnknownOperationUnreachableAgent)
 
   // The master should respond with '202 Accepted' and an
   // empty body (response field unset).
-  ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+  ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
   EXPECT_FALSE(result->has_response());
 
   AWAIT_READY(reconciliationUpdate);
@@ -704,7 +704,7 @@ TEST_P(OperationReconciliationTest, UnknownOperationAgentMarkedGone)
 
   // The master should respond with '202 Accepted' and an
   // empty body (response field unset).
-  ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+  ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
   EXPECT_FALSE(result->has_response());
 
   AWAIT_READY(reconciliationUpdate);
@@ -767,7 +767,7 @@ TEST_P(OperationReconciliationTest, UnknownOperationUnknownAgent)
 
   // The master should respond with '202 Accepted' and an
   // empty body (response field unset).
-  ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+  ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
   EXPECT_FALSE(result->has_response());
 
   AWAIT_READY(reconciliationUpdate);
@@ -991,7 +991,7 @@ TEST_P(
 
     // The master should respond with '202 Accepted' and an
     // empty body (response field unset).
-    ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+    ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
     EXPECT_FALSE(result->has_response());
 
     AWAIT_READY(reconciliationUpdate);
@@ -1014,7 +1014,7 @@ TEST_P(
 
     // The master should respond with '202 Accepted' and an
     // empty body (response field unset).
-    ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+    ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
     EXPECT_FALSE(result->has_response());
 
     AWAIT_READY(reconciliationUpdate);
@@ -1132,7 +1132,7 @@ TEST_P(OperationReconciliationTest, ReconcileUnackedAgentOperation)
 
     // The master should respond with '202 Accepted' and an
     // empty body (response field unset).
-    ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+    ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
     EXPECT_FALSE(result->has_response());
 
     AWAIT_READY(reconciliationUpdate);
@@ -1155,7 +1155,7 @@ TEST_P(OperationReconciliationTest, ReconcileUnackedAgentOperation)
 
     // The master should respond with '202 Accepted' and an
     // empty body (response field unset).
-    ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+    ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
     EXPECT_FALSE(result->has_response());
 
     AWAIT_READY(reconciliationUpdate);
@@ -1324,7 +1324,7 @@ TEST_P(OperationReconciliationTest, UnackedAgentOperationAfterMasterFailover)
 
     // The master should respond with '202 Accepted' and an
     // empty body (response field unset).
-    ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+    ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
     EXPECT_FALSE(result->has_response());
 
     AWAIT_READY(reconciliationUpdate);
@@ -1347,7 +1347,7 @@ TEST_P(OperationReconciliationTest, UnackedAgentOperationAfterMasterFailover)
 
     // The master should respond with '202 Accepted' and an
     // empty body (response field unset).
-    ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+    ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
     EXPECT_FALSE(result->has_response());
 
     AWAIT_READY(reconciliationUpdate);
@@ -1503,7 +1503,7 @@ TEST_P(OperationReconciliationTest, ReconcileAgentOperationOnGoneAgent)
 
     // The master should respond with '202 Accepted' and an
     // empty body (response field unset).
-    ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+    ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
     EXPECT_FALSE(result->has_response());
 
     AWAIT_READY(reconciliationUpdate);
@@ -1531,7 +1531,7 @@ TEST_P(OperationReconciliationTest, ReconcileAgentOperationOnGoneAgent)
 
     // The master should respond with '202 Accepted' and an
     // empty body (response field unset).
-    ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+    ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
     EXPECT_FALSE(result->has_response());
 
     // Settle the clock to ensure that no further operation status updates are
@@ -1683,7 +1683,7 @@ TEST_P(OperationReconciliationTest, OperationOnUnsubscribedProvider)
 
   // The master should respond with '202 Accepted' and an
   // empty body (response field unset).
-  ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+  ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
   EXPECT_FALSE(result->has_response());
 
   AWAIT_READY(reconciliationUpdate);
@@ -1902,7 +1902,7 @@ TEST_P(
 
   // The master should respond with '202 Accepted' and an
   // empty body (response field unset).
-  ASSERT_EQ(process::http::Status::ACCEPTED, result->status_code());
+  ASSERT_EQ(process::http::status::ACCEPTED, result->status_code());
   EXPECT_FALSE(result->has_response());
 
   AWAIT_READY(reconciliationUpdate);

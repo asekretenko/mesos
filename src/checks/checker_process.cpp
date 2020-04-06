@@ -648,7 +648,7 @@ Future<int> CheckerProcess::nestedCommandCheck(
       .onReady(defer(self(),
                      [this, promise, cmd, nested, previousId]
                      (const http::Response& response) {
-        if (response.code != http::Status::OK) {
+        if (response.code != http::status::OK) {
           // The agent was unable to remove the check container, we
           // treat this as a transient failure and discard the promise.
           LOG(WARNING) << "Received '" << response.status << "' ("
@@ -787,7 +787,7 @@ void CheckerProcess::___nestedCommandCheck(
     const http::Response& launchResponse,
     runtime::Nested nested)
 {
-  if (launchResponse.code != http::Status::OK) {
+  if (launchResponse.code != http::status::OK) {
     // The agent was unable to launch the check container,
     // we treat this as a transient failure.
     LOG(WARNING) << "Received '" << launchResponse.status << "' ("
@@ -946,7 +946,7 @@ Future<Option<int>> CheckerProcess::_waitNestedContainer(
     const ContainerID& containerId,
     const http::Response& httpResponse)
 {
-  if (httpResponse.code != http::Status::OK) {
+  if (httpResponse.code != http::status::OK) {
     return Failure(
         "Received '" + httpResponse.status + "' (" + httpResponse.body +
         ") while waiting on " + name + " container '" +

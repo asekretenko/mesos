@@ -3178,7 +3178,7 @@ void Master::updateFramework(
   updateFramework(std::move(call))
     .onAny(defer(self(), [this, from, frameworkId](
              const Future<process::http::Response>& response) {
-      if (response->code != process::http::Status::OK) {
+      if (response->code != process::http::status::OK) {
         CHECK_EQ(response->type, process::http::Response::BODY);
         FrameworkErrorMessage message;
         message.set_message(response->body);

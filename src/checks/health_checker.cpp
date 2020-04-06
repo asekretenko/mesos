@@ -149,11 +149,11 @@ static Try<Nothing> interpretCheckStatusInfo(const CheckStatusInfo& result)
     }
     case CheckInfo::HTTP: {
       const int statusCode = result.http().status_code();
-      if (statusCode < process::http::Status::OK ||
-          statusCode >= process::http::Status::BAD_REQUEST) {
+      if (statusCode < process::http::status::OK ||
+          statusCode >= process::http::status::BAD_REQUEST) {
         return Error(
             "Unexpected HTTP response code: " +
-            process::http::Status::string(statusCode));
+            process::http::status::string(statusCode));
       }
 
       break;

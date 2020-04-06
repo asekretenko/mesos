@@ -806,7 +806,7 @@ Future<Nothing> DockerFetcherPluginProcess::_fetch(
     const http::Headers& basicAuthHeaders,
     const http::Response& response)
 {
-  if (response.code == http::Status::UNAUTHORIZED) {
+  if (response.code == http::status::UNAUTHORIZED) {
     // Use the 'Basic' credential to request an auth token by default.
     return getAuthHeader(uri.path(), manifestUri, basicAuthHeaders, response)
       .then(defer(self(), [=](
@@ -831,7 +831,7 @@ Future<Nothing> DockerFetcherPluginProcess::__fetch(
     const http::Headers& authHeaders,
     const http::Response& response)
 {
-  if (response.code != http::Status::OK) {
+  if (response.code != http::status::OK) {
     return Failure(
         "Unexpected HTTP response '" + response.status + "' "
         "when trying to get the manifest");
@@ -984,7 +984,7 @@ Future<Nothing> DockerFetcherPluginProcess::fetchBlob(
       authHeaders,
       stallTimeout)
     .then(defer(self(), [=](int code) -> Future<Nothing> {
-      if (code == http::Status::UNAUTHORIZED) {
+      if (code == http::status::UNAUTHORIZED) {
         // If we get a '401 Unauthorized', we assume that 'authHeaders'
         // is either empty or contains the 'Basic' credential, and we
         // can use it to request an auth token.
@@ -992,7 +992,7 @@ Future<Nothing> DockerFetcherPluginProcess::fetchBlob(
         return _fetchBlob(uri, directory, blobUri, authHeaders);
       }
 
-      if (code == http::Status::OK) {
+      if (code == http::status::OK) {
         return Nothing();
       }
 
@@ -1000,7 +1000,7 @@ Future<Nothing> DockerFetcherPluginProcess::fetchBlob(
       return urlFetchBlob(uri, directory, blobUri, authHeaders);
 #else
       return Failure(
-          "Unexpected HTTP response '" + http::Status::string(code) + "' "
+          "Unexpected HTTP response '" + http::status::string(code) + "' "
           "when trying to download the blob");
 #endif
     }));
@@ -1021,7 +1021,7 @@ Future<Nothing> DockerFetcherPluginProcess::_fetchBlob(
     .then(defer(self(), [=](const http::Response& response) -> Future<Nothing> {
       // We expect a '401 Unauthorized' response here since the
       // 'download' with the same URI returns a '401 Unauthorized'.
-      if (response.code != http::Status::UNAUTHORIZED) {
+      if (response.code != http::status::UNAUTHORIZED) {
         return Failure(
           "Expecting a '401 Unauthorized' response when fetching a blob, "
           "but get '" + response.status + "' instead");
@@ -1037,7 +1037,7 @@ Future<Nothing> DockerFetcherPluginProcess::_fetchBlob(
               authHeaders,
               stallTimeout)
             .then(defer(self(), [=](int code) -> Future<Nothing> {
-              if (code == http::Status::OK) {
+              if (code == http::status::OK) {
                 return Nothing();
               }
 
@@ -1045,7 +1045,7 @@ Future<Nothing> DockerFetcherPluginProcess::_fetchBlob(
               return urlFetchBlob(uri, directory, blobUri, authHeaders);
 #else
               return Failure(
-                  "Unexpected HTTP response '" + http::Status::string(code) +
+                  "Unexpected HTTP response '" + http::status::string(code) +
                   "' when trying to download blob '" +
                   strings::trim(stringify(blobUri)) +
                   "' with schema 1 manifest");
@@ -1111,12 +1111,12 @@ Future<Nothing> DockerFetcherPluginProcess::_urlFetchBlob(
   urls.pop_back();
   return download(blobUri, url, directory, authHeaders, stallTimeout)
       .then(defer(self(), [=](int code) -> Future<Nothing> {
-        if (code == http::Status::OK) {
+        if (code == http::status::OK) {
           return Nothing();
         }
 
         LOG(WARNING) << "Unexpected HTTP response '"
-                      << http::Status::string(code)
+                      << http::status::string(code)
                       << "' when trying to download blob '"
                       << strings::trim(stringify(blobUri))
                       << "' from '" << url
@@ -1220,7 +1220,7 @@ Future<http::Headers> DockerFetcherPluginProcess::getAuthHeader(
       return curl(authServiceUri, basicAuthHeaders, stallTimeout)
         .then([authServiceUri](const http::Response& response)
         -> Future<http::Headers> {
-          if (response.code != http::Status::OK) {
+          if (response.code != http::status::OK) {
             return Failure(
                 "Unexpected HTTP response '" + response.status + "' "
                 "when trying to GET '" + authServiceUri + "'");
