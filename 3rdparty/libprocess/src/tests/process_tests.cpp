@@ -1564,8 +1564,8 @@ TEST_F(ProcessTest, Http2)
     http::post(process.self(), "handler", headers, "hello world");
 
   AWAIT_READY(response);
-  ASSERT_EQ(http::Status::ACCEPTED, response->code);
-  ASSERT_EQ(http::Status::string(http::Status::ACCEPTED),
+  ASSERT_EQ(http::status::ACCEPTED, response->code);
+  ASSERT_EQ(http::status::string(http::status::ACCEPTED),
             response->status);
 
   AWAIT_READY(body);
@@ -1924,8 +1924,8 @@ TEST_F(ProcessTest, FirewallDisablePaths)
   Future<http::Response> response = http::get(pid, "handler1");
 
   AWAIT_READY(response);
-  EXPECT_EQ(http::Status::FORBIDDEN, response->code);
-  EXPECT_EQ(http::Status::string(http::Status::FORBIDDEN),
+  EXPECT_EQ(http::status::FORBIDDEN, response->code);
+  EXPECT_EQ(http::status::string(http::status::FORBIDDEN),
             response->status);
 
   // Test call to a non disabled endpoint.
@@ -1936,16 +1936,16 @@ TEST_F(ProcessTest, FirewallDisablePaths)
   response = http::get(pid, "handler2");
 
   AWAIT_READY(response);
-  EXPECT_EQ(http::Status::OK, response->code);
-  EXPECT_EQ(http::Status::string(http::Status::OK),
+  EXPECT_EQ(http::status::OK, response->code);
+  EXPECT_EQ(http::status::string(http::status::OK),
             response->status);
 
   // Test nested endpoints. Full paths needed for match.
   response = http::get(pid, "handler2/nested");
 
   AWAIT_READY(response);
-  EXPECT_EQ(http::Status::FORBIDDEN, response->code);
-  EXPECT_EQ(http::Status::string(http::Status::FORBIDDEN),
+  EXPECT_EQ(http::status::FORBIDDEN, response->code);
+  EXPECT_EQ(http::status::string(http::status::FORBIDDEN),
             response->status);
 
   EXPECT_CALL(process, handler2(_))
@@ -1954,8 +1954,8 @@ TEST_F(ProcessTest, FirewallDisablePaths)
   response = http::get(pid, "handler2/nested/path");
 
   AWAIT_READY(response);
-  EXPECT_EQ(http::Status::OK, response->code);
-  EXPECT_EQ(http::Status::string(http::Status::OK),
+  EXPECT_EQ(http::status::OK, response->code);
+  EXPECT_EQ(http::status::string(http::status::OK),
             response->status);
 
   EXPECT_CALL(process, handler3(_))
@@ -1966,8 +1966,8 @@ TEST_F(ProcessTest, FirewallDisablePaths)
   response = http::get(pid, "handler3");
 
   AWAIT_READY(response);
-  EXPECT_EQ(http::Status::OK, response->code);
-  EXPECT_EQ(http::Status::string(http::Status::OK),
+  EXPECT_EQ(http::status::OK, response->code);
+  EXPECT_EQ(http::status::string(http::status::OK),
             response->status);
 
   EXPECT_CALL(process, handler3(_))
@@ -1976,8 +1976,8 @@ TEST_F(ProcessTest, FirewallDisablePaths)
   response = http::get(pid, "handler3/nested");
 
   AWAIT_READY(response);
-  EXPECT_EQ(http::Status::OK, response->code);
-  EXPECT_EQ(http::Status::string(http::Status::OK),
+  EXPECT_EQ(http::status::OK, response->code);
+  EXPECT_EQ(http::status::string(http::status::OK),
             response->status);
 
   terminate(process);
@@ -2004,15 +2004,15 @@ TEST_F(ProcessTest, FirewallUninstall)
   Future<http::Response> response = http::get(pid, "handler1");
 
   AWAIT_READY(response);
-  EXPECT_EQ(http::Status::FORBIDDEN, response->code);
-  EXPECT_EQ(http::Status::string(http::Status::FORBIDDEN),
+  EXPECT_EQ(http::status::FORBIDDEN, response->code);
+  EXPECT_EQ(http::status::string(http::status::FORBIDDEN),
             response->status);
 
   response = http::get(pid, "handler2");
 
   AWAIT_READY(response);
-  EXPECT_EQ(http::Status::FORBIDDEN, response->code);
-  EXPECT_EQ(http::Status::string(http::Status::FORBIDDEN),
+  EXPECT_EQ(http::status::FORBIDDEN, response->code);
+  EXPECT_EQ(http::status::string(http::status::FORBIDDEN),
             response->status);
 
   process::firewall::install({});
@@ -2023,8 +2023,8 @@ TEST_F(ProcessTest, FirewallUninstall)
   response = http::get(pid, "handler1");
 
   AWAIT_READY(response);
-  EXPECT_EQ(http::Status::OK, response->code);
-  EXPECT_EQ(http::Status::string(http::Status::OK),
+  EXPECT_EQ(http::status::OK, response->code);
+  EXPECT_EQ(http::status::string(http::status::OK),
             response->status);
 
   EXPECT_CALL(process, handler2(_))
@@ -2033,8 +2033,8 @@ TEST_F(ProcessTest, FirewallUninstall)
   response = http::get(pid, "handler2");
 
   AWAIT_READY(response);
-  EXPECT_EQ(http::Status::OK, response->code);
-  EXPECT_EQ(http::Status::string(http::Status::OK),
+  EXPECT_EQ(http::status::OK, response->code);
+  EXPECT_EQ(http::status::string(http::status::OK),
             response->status);
 
   terminate(process);
@@ -2100,5 +2100,5 @@ TEST_F(ProcessTest, ProcessesEndpointNoHang)
   AWAIT_READY(waited);
 
   AWAIT_READY(response);
-  EXPECT_EQ(http::Status::OK, response->code);
+  EXPECT_EQ(http::status::OK, response->code);
 }

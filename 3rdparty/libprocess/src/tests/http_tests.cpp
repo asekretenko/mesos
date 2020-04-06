@@ -343,8 +343,8 @@ TEST_P(HTTPTest, Endpoints)
     EXPECT_TRUE(writer.close());
 
     AWAIT_READY(future);
-    EXPECT_EQ(http::Status::OK, future->code);
-    EXPECT_EQ(http::Status::string(http::Status::OK), future->status);
+    EXPECT_EQ(http::status::OK, future->code);
+    EXPECT_EQ(http::status::string(http::status::OK), future->status);
 
     EXPECT_SOME_EQ("chunked", future->headers.get("Transfer-Encoding"));
     EXPECT_EQ("Hello World\n", future->body);
@@ -373,8 +373,8 @@ TEST_P(HTTPTest, EndpointsHelp)
   Future<http::Response> response = http::get(url);
 
   AWAIT_READY(response);
-  EXPECT_EQ(http::Status::OK, response->code);
-  EXPECT_EQ(http::Status::string(http::Status::OK), response->status);
+  EXPECT_EQ(http::status::OK, response->code);
+  EXPECT_EQ(http::status::string(http::status::OK), response->status);
 
   // Hit '/help?format=json' and wait for a 200 OK response.
   url = http::URL(
@@ -387,8 +387,8 @@ TEST_P(HTTPTest, EndpointsHelp)
   response = http::get(url);
 
   AWAIT_READY(response);
-  EXPECT_EQ(http::Status::OK, response->code);
-  EXPECT_EQ(http::Status::string(http::Status::OK), response->status);
+  EXPECT_EQ(http::status::OK, response->code);
+  EXPECT_EQ(http::status::string(http::status::OK), response->status);
 
   // Assert that it is valid JSON
   EXPECT_SOME(JSON::parse(response->body));
@@ -403,8 +403,8 @@ TEST_P(HTTPTest, EndpointsHelp)
   response = http::get(url);
 
   AWAIT_READY(response);
-  EXPECT_EQ(http::Status::OK, response->code);
-  EXPECT_EQ(http::Status::string(http::Status::OK), response->status);
+  EXPECT_EQ(http::status::OK, response->code);
+  EXPECT_EQ(http::status::string(http::status::OK), response->status);
 
   // Hit '/help/<id>/a/b/c' and wait for a 200 OK response.
   url = http::URL(
@@ -416,8 +416,8 @@ TEST_P(HTTPTest, EndpointsHelp)
   response = http::get(url);
 
   AWAIT_READY(response);
-  EXPECT_EQ(http::Status::OK, response->code);
-  EXPECT_EQ(http::Status::string(http::Status::OK), response->status);
+  EXPECT_EQ(http::status::OK, response->code);
+  EXPECT_EQ(http::status::string(http::status::OK), response->status);
 }
 
 
@@ -443,8 +443,8 @@ TEST_P(HTTPTest, EndpointsHelpRemoval)
   Future<http::Response> response = http::get(url);
 
   AWAIT_READY(response);
-  EXPECT_EQ(http::Status::OK, response->code);
-  EXPECT_EQ(http::Status::string(http::Status::OK), response->status);
+  EXPECT_EQ(http::status::OK, response->code);
+  EXPECT_EQ(http::status::string(http::status::OK), response->status);
 
   // Delete the HttpProcess. This should remove all help endpoints
   // for the process, in addition to its own endpoints.
@@ -460,8 +460,8 @@ TEST_P(HTTPTest, EndpointsHelpRemoval)
   response = http::get(url);
 
   AWAIT_READY(response);
-  ASSERT_EQ(http::Status::BAD_REQUEST, response->code);
-  ASSERT_EQ(http::Status::string(http::Status::BAD_REQUEST), response->status);
+  ASSERT_EQ(http::status::BAD_REQUEST, response->code);
+  ASSERT_EQ(http::status::string(http::status::BAD_REQUEST), response->status);
 }
 
 
@@ -761,8 +761,8 @@ TEST_P(HTTPTest, Get)
     http::get(http.process->self(), "get", None(), None(), GetParam());
 
   AWAIT_READY(noQueryFuture);
-  EXPECT_EQ(http::Status::OK, noQueryFuture->code);
-  EXPECT_EQ(http::Status::string(http::Status::OK), noQueryFuture->status);
+  EXPECT_EQ(http::status::OK, noQueryFuture->code);
+  EXPECT_EQ(http::status::string(http::status::OK), noQueryFuture->status);
 
   EXPECT_CALL(*http.process, get(_))
     .WillOnce(Invoke(validateGetWithQuery));
@@ -771,8 +771,8 @@ TEST_P(HTTPTest, Get)
     http::get(http.process->self(), "get", "foo=bar", None(), GetParam());
 
   AWAIT_READY(queryFuture);
-  ASSERT_EQ(http::Status::OK, queryFuture->code);
-  ASSERT_EQ(http::Status::string(http::Status::OK), queryFuture->status);
+  ASSERT_EQ(http::status::OK, queryFuture->code);
+  ASSERT_EQ(http::status::string(http::status::OK), queryFuture->status);
 }
 
 
@@ -791,8 +791,8 @@ TEST_P(HTTPTest, NestedGet)
     http::get(http.process->self(), "/a/b/c", None(), None(), GetParam());
 
   AWAIT_READY(response);
-  ASSERT_EQ(http::Status::OK, response->code);
-  ASSERT_EQ(http::Status::string(http::Status::OK), response->status);
+  ASSERT_EQ(http::status::OK, response->code);
+  ASSERT_EQ(http::status::string(http::status::OK), response->status);
 
   // "/a/b" should be handled by "/a" handler and return
   // 'http::Accepted()'.
@@ -800,8 +800,8 @@ TEST_P(HTTPTest, NestedGet)
     http::get(http.process->self(), "/a/b", None(), None(), GetParam());
 
   AWAIT_READY(response);
-  ASSERT_EQ(http::Status::ACCEPTED, response->code);
-  ASSERT_EQ(http::Status::string(http::Status::ACCEPTED), response->status);
+  ASSERT_EQ(http::status::ACCEPTED, response->code);
+  ASSERT_EQ(http::status::string(http::status::ACCEPTED), response->status);
 }
 
 
@@ -1017,8 +1017,8 @@ TEST_P(HTTPTest, Post)
       GetParam());
 
   AWAIT_READY(future);
-  ASSERT_EQ(http::Status::OK, future->code);
-  ASSERT_EQ(http::Status::string(http::Status::OK), future->status);
+  ASSERT_EQ(http::status::OK, future->code);
+  ASSERT_EQ(http::status::string(http::status::OK), future->status);
 
   // Now test passing headers instead.
   http::Headers headers;
@@ -1036,8 +1036,8 @@ TEST_P(HTTPTest, Post)
       GetParam());
 
   AWAIT_READY(future);
-  ASSERT_EQ(http::Status::OK, future->code);
-  ASSERT_EQ(http::Status::string(http::Status::OK), future->status);
+  ASSERT_EQ(http::status::OK, future->code);
+  ASSERT_EQ(http::status::string(http::status::OK), future->status);
 }
 
 
@@ -1067,8 +1067,8 @@ TEST_P(HTTPTest, Delete)
         GetParam());
 
   AWAIT_READY(future);
-  ASSERT_EQ(http::Status::OK, future->code);
-  ASSERT_EQ(http::Status::string(http::Status::OK), future->status);
+  ASSERT_EQ(http::status::OK, future->code);
+  ASSERT_EQ(http::status::string(http::status::OK), future->status);
 }
 
 
@@ -1095,8 +1095,8 @@ TEST_P(HTTPTest, Request)
         http.process->self(), "DELETE", GetParam() == "https", "request"));
 
   AWAIT_READY(future);
-  ASSERT_EQ(http::Status::OK, future->code);
-  ASSERT_EQ(http::Status::string(http::Status::OK), future->status);
+  ASSERT_EQ(http::status::OK, future->code);
+  ASSERT_EQ(http::status::string(http::status::OK), future->status);
 }
 
 

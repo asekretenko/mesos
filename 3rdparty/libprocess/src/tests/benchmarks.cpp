@@ -294,8 +294,8 @@ TEST(ProcessTest, Process_BENCHMARK_ClientServer)
   // Print the throughput of each client.
   size_t i = 0;
   foreach (const http::Response& response, responses.get()) {
-    ASSERT_EQ(http::Status::OK, response.code);
-    ASSERT_EQ(http::Status::string(http::Status::OK), response.status);
+    ASSERT_EQ(http::status::OK, response.code);
+    ASSERT_EQ(http::status::string(http::status::OK), response.status);
 
     Try<Duration> elapsed = Duration::parse(response.body);
     ASSERT_SOME(elapsed);

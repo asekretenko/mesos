@@ -149,7 +149,7 @@ StatusDescription statuses[] = {
 // [1]: https://schani.wordpress.com/2010/04/30/linear-vs-binary-search/
 // [2]: https://stackoverflow.com/questions/1275665/at-which-n-does-binary-search-become-faster-than-linear-search-on-a-modern-cpu
 
-string Status::string(uint16_t code)
+string status::string(uint16_t code)
 {
   auto value = std::find_if(
       std::begin(statuses),
@@ -718,7 +718,7 @@ hashmap<string, string> WWWAuthenticate::authParam()
 
 
 OK::OK(const JSON::Value& value, const Option<string>& jsonp)
-  : Response(Status::OK)
+  : Response(status::OK)
 {
   type = BODY;
 
@@ -742,7 +742,7 @@ OK::OK(const JSON::Value& value, const Option<string>& jsonp)
 
 
 OK::OK(JSON::Proxy&& value, const Option<string>& jsonp)
-  : Response(Status::OK)
+  : Response(status::OK)
 {
   type = BODY;
 

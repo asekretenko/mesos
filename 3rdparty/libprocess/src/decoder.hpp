@@ -449,7 +449,7 @@ private:
       decoder->response->code = decoder->parser.status_code;
 
       decoder->response->status =
-        http::Status::string(decoder->parser.status_code);
+        http::status::string(decoder->parser.status_code);
     } else {
       decoder->failure = true;
       return http_parsing::FAILURE;
@@ -689,7 +689,7 @@ private:
       decoder->response->code = decoder->parser.status_code;
 
       decoder->response->status =
-        http::Status::string(decoder->parser.status_code);
+        http::status::string(decoder->parser.status_code);
     } else {
       decoder->failure = true;
       return http_parsing::FAILURE;

@@ -223,9 +223,8 @@ struct CaseInsensitiveEqual
   }
 };
 
-// TODO(asekretenko): Rename `Status` into `status` to be consistent with
-// styleguide.
-namespace Status
+
+namespace status
 {
   constexpr uint16_t CONTINUE = 100;
   constexpr uint16_t SWITCHING_PROTOCOLS = 101;
@@ -269,7 +268,7 @@ namespace Status
   constexpr uint16_t HTTP_VERSION_NOT_SUPPORTED = 505;
 
   std::string string(uint16_t code);
-}; // namespace Status {
+}; // namespace status {
 
 
 // Represents an asynchronous in-memory unbuffered Pipe, currently
@@ -618,7 +617,7 @@ struct Response
   Response(uint16_t _code)
     : type(NONE), code(_code)
   {
-    status = Status::string(code);
+    status = status::string(code);
   }
 
   explicit Response(
@@ -631,7 +630,7 @@ struct Response
   {
     headers["Content-Length"] = stringify(body.size());
     headers["Content-Type"] = contentType;
-    status = Status::string(code);
+    status = status::string(code);
   }
 
   // TODO(benh): Add major/minor version.
@@ -679,16 +678,16 @@ struct Response
 struct OK : Response
 {
   OK()
-    : Response(Status::OK) {}
+    : Response(status::OK) {}
 
   explicit OK(const char* body)
-    : Response(std::string(body), Status::OK) {}
+    : Response(std::string(body), status::OK) {}
 
   explicit OK(std::string body)
-    : Response(std::move(body), Status::OK) {}
+    : Response(std::move(body), status::OK) {}
 
   explicit OK(std::string body, const std::string& contentType)
-    : Response(std::move(body), Status::OK, contentType) {}
+    : Response(std::move(body), status::OK, contentType) {}
 
   OK(const JSON::Value& value, const Option<std::string>& jsonp = None());
 
@@ -699,17 +698,17 @@ struct OK : Response
 struct Accepted : Response
 {
   Accepted()
-    : Response(Status::ACCEPTED) {}
+    : Response(status::ACCEPTED) {}
 
   explicit Accepted(std::string body)
-    : Response(std::move(body), Status::ACCEPTED) {}
+    : Response(std::move(body), status::ACCEPTED) {}
 };
 
 
 struct TemporaryRedirect : Response
 {
   explicit TemporaryRedirect(const std::string& url)
-    : Response(Status::TEMPORARY_REDIRECT)
+    : Response(status::TEMPORARY_REDIRECT)
   {
     headers["Location"] = url;
   }
@@ -722,7 +721,7 @@ struct BadRequest : Response
     : BadRequest("400 Bad Request.") {}
 
   explicit BadRequest(std::string body)
-    : Response(std::move(body), Status::BAD_REQUEST) {}
+    : Response(std::move(body), status::BAD_REQUEST) {}
 };
 
 
@@ -734,7 +733,7 @@ struct Unauthorized : Response
   Unauthorized(
       const std::vector<std::string>& challenges,
       std::string body)
-    : Response(std::move(body), Status::UNAUTHORIZED)
+    : Response(std::move(body), status::UNAUTHORIZED)
   {
     // TODO(arojas): Many HTTP client implementations do not support
     // multiple challenges within a single 'WWW-Authenticate' header.
@@ -751,7 +750,7 @@ struct Forbidden : Response
     : Forbidden("403 Forbidden.") {}
 
   explicit Forbidden(std::string body)
-    : Response(std::move(body), Status::FORBIDDEN) {}
+    : Response(std::move(body), status::FORBIDDEN) {}
 };
 
 
@@ -761,7 +760,7 @@ struct NotFound : Response
     : NotFound("404 Not Found.") {}
 
   explicit NotFound(std::string body)
-    : Response(std::move(body), Status::NOT_FOUND) {}
+    : Response(std::move(body), status::NOT_FOUND) {}
 };
 
 
@@ -775,7 +774,7 @@ struct MethodNotAllowed : Response
       const Option<std::string>& requestMethod = None())
     : Response(
         constructBody(allowedMethods, requestMethod),
-        Status::METHOD_NOT_ALLOWED)
+        status::METHOD_NOT_ALLOWED)
   {
     headers["Allow"] = strings::join(", ", allowedMethods);
   }
@@ -802,7 +801,7 @@ struct NotAcceptable : Response
     : NotAcceptable("406 Not Acceptable.") {}
 
   explicit NotAcceptable(std::string body)
-    : Response(std::move(body), Status::NOT_ACCEPTABLE) {}
+    : Response(std::move(body), status::NOT_ACCEPTABLE) {}
 };
 
 
@@ -812,7 +811,7 @@ struct Conflict : Response
     : Conflict("409 Conflict.") {}
 
   explicit Conflict(std::string body)
-    : Response(std::move(body), Status::CONFLICT) {}
+    : Response(std::move(body), status::CONFLICT) {}
 };
 
 
@@ -822,7 +821,7 @@ struct PreconditionFailed : Response
     : PreconditionFailed("412 Precondition Failed.") {}
 
   explicit PreconditionFailed(std::string body)
-    : Response(std::move(body), Status::PRECONDITION_FAILED) {}
+    : Response(std::move(body), status::PRECONDITION_FAILED) {}
 };
 
 
@@ -832,7 +831,7 @@ struct UnsupportedMediaType : Response
     : UnsupportedMediaType("415 Unsupported Media Type.") {}
 
   explicit UnsupportedMediaType(std::string body)
-    : Response(std::move(body), Status::UNSUPPORTED_MEDIA_TYPE) {}
+    : Response(std::move(body), status::UNSUPPORTED_MEDIA_TYPE) {}
 };
 
 
@@ -842,7 +841,7 @@ struct InternalServerError : Response
     : InternalServerError("500 Internal Server Error.") {}
 
   explicit InternalServerError(std::string body)
-    : Response(std::move(body), Status::INTERNAL_SERVER_ERROR) {}
+    : Response(std::move(body), status::INTERNAL_SERVER_ERROR) {}
 };
 
 
@@ -852,7 +851,7 @@ struct NotImplemented : Response
     : NotImplemented("501 Not Implemented.") {}
 
   explicit NotImplemented(std::string body)
-    : Response(std::move(body), Status::NOT_IMPLEMENTED) {}
+    : Response(std::move(body), status::NOT_IMPLEMENTED) {}
 };
 
 
@@ -862,7 +861,7 @@ struct ServiceUnavailable : Response
     : ServiceUnavailable("503 Service Unavailable.") {}
 
   explicit ServiceUnavailable(std::string body)
-    : Response(std::move(body), Status::SERVICE_UNAVAILABLE) {}
+    : Response(std::move(body), status::SERVICE_UNAVAILABLE) {}
 };
 
 
