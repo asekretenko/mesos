@@ -253,8 +253,8 @@ if (WIN32)
   if (CMAKE_GENERATOR MATCHES "Visual Studio")
     set_target_properties(
       sasl2 PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${SASL2_ROOT}-build/Debug/libsasl2${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${SASL2_ROOT}-build/Release/libsasl2${LIBRARY_SUFFIX})
+      IMPORTED_LOCATION_DEBUG ${SASL2_ROOT}-build/Debug/libsasl2${CMAKE_STATIC_LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${SASL2_ROOT}-build/Release/libsasl2${CMAKE_STATIC_LIBRARY_SUFFIX})
   else ()
     set_target_properties(
       sasl2 PROPERTIES
