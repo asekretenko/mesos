@@ -815,7 +815,7 @@ if (WIN32)
       libcurl PROPERTIES
       IMPORTED_LOCATION_DEBUG ${CURL_ROOT}-build/lib/Debug/libcurl-d${LIBRARY_SUFFIX}
       IMPORTED_LOCATION_RELEASE ${CURL_ROOT}-build/lib/Release/libcurl${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_DEBUG ${CURL_ROOT}-build/lib/Debug/libcurl_imp${CMAKE_IMPORT_LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_DEBUG ${CURL_ROOT}-build/lib/Debug/libcurl-d_imp${CMAKE_IMPORT_LIBRARY_SUFFIX}
       IMPORTED_IMPLIB_RELEASE ${CURL_ROOT}-build/lib/Release/libcurl_imp${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
     set_target_properties(
