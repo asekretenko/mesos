@@ -62,11 +62,15 @@ struct __Exit
     stream() << "EXIT with status " << _status << ": ";
   }
 
+// We disable MSVC's "destructor never returns" warning, which is issued
+// despite the destructor being __declspec(noreturn)
+#pragma warning(disable:4722)
   STOUT_NORETURN ~__Exit()
   {
     message.Flush();
     exit(status);
   }
+#pragma warning(default:4722)
 
   std::ostream& stream()
   {
