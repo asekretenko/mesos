@@ -17,11 +17,6 @@
 #include <signal.h> // For sigaction(), sigemptyset().
 #include <string.h> // For strsignal().
 
-#ifdef __WINDOWS__
-#include <windows.h>
-#include <dbghelp.h>
-#endif
-
 #include <glog/logging.h>
 #include <glog/raw_logging.h>
 
@@ -44,6 +39,12 @@
 #include <stout/os/signals.hpp>
 
 #include "logging/logging.hpp"
+
+#ifdef __WINDOWS__
+#include <windows.h>
+#include <dbghelp.h>
+#endif
+
 
 #ifdef __linux__
 // Declare FLAGS_drop_log_memory flag for glog. This declaration is based on the
