@@ -343,7 +343,9 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES MSVC)
     # C4244 is a possible loss of data warning for integer conversions.
     /w44244
     # C4267 is a possible loss of data warning when converting from `size_t`.
-    /w44267)
+    /w44267
+    # Enable parallel build on compiler level.
+    /MP)
 
   if (BUILD_SHARED_LIBS)
     # Disable C4251 "class needs to have dll-interface" warning. This one
