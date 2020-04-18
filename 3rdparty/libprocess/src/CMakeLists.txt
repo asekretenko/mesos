@@ -129,3 +129,14 @@ target_compile_definitions(
 
 target_include_directories(process PUBLIC ../include)
 target_include_directories(process PRIVATE .)
+
+install(
+  TARGETS process
+  RUNTIME DESTINATION ${MESOS_INSTALL_RUNTIME}
+  LIBRARY DESTINATION ${MESOS_INSTALL_LIBRARIES}
+  ARCHIVE DESTINATION ${MESOS_INSTALL_LIBRARIES})
+
+install(
+  DIRECTORY ../include/process
+  DESTINATION ${MESOS_INSTALL_HEADERS}
+  FILES_MATCHING PATTERN "*.hpp")

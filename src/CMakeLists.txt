@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 # GENERATE PUBLIC AND INTERNAL PROTOBUFS.
 #########################################
 include(MesosProtobuf)
@@ -622,6 +623,7 @@ target_include_directories(
   ${MESOS_SRC_DIR})
 
 target_link_libraries(
+<<<<<<< HEAD
   mesos PUBLIC
   process
   sasl2
@@ -629,6 +631,15 @@ target_link_libraries(
   mesos-protobufs
   $<$<AND:$<PLATFORM_ID:Linux>,$<BOOL:${ENABLE_NVML}>>:nvml>
   $<$<BOOL:${HAS_JAVA}>:mesos-java>)
+=======
+  mesos
+  PUBLIC mesos-base zookeeper
+)
+
+if(HAS_JAVA)
+  target_link_libraries(mesos PUBLIC mesos-java)
+endif()
+>>>>>>> 9befa75e9... WIP: fixup: PUBLIC mesos-protobuf-internal
 
 if (NOT WIN32)
   target_link_libraries(mesos PUBLIC leveldb)
@@ -667,6 +678,19 @@ add_subdirectory(usage)
 if (NOT WIN32)
   add_subdirectory(resource_provider/storage)
 endif()
+
+install(
+  TARGETS
+    mesos-protobufs
+    mesos-protobufs-internal
+    mesos-base
+    mesos
+    mesos-agent-internal
+    mesos-master-internal
+    mesos-local-internal
+    mesos-scheduler
+  RUNTIME DESTINATION ${MESOS_INSTALL_RUNTIME}
+  LIBRARY DESTINATION ${MESOS_INSTALL_LIBRARIES})
 
 
 # BUILD THE MESOS TESTS.
