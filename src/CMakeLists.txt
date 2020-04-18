@@ -669,6 +669,14 @@ if (NOT WIN32)
 endif()
 
 
+install(
+  TARGETS
+    mesos-protobufs
+    mesos
+  RUNTIME DESTINATION ${MESOS_INSTALL_RUNTIME}
+  LIBRARY DESTINATION ${MESOS_INSTALL_LIBRARIES})
+
+
 # BUILD THE MESOS TESTS.
 ########################
 add_subdirectory(tests)
