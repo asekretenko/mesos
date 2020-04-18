@@ -18,3 +18,6 @@
 ###################################
 add_executable(mesos-tcp-connect tcp_connect.cpp)
 target_link_libraries(mesos-tcp-connect PRIVATE stout process)
+install(
+  TARGETS mesos-tcp-connect
+  RUNTIME DESTINATION ${MESOS_INSTALL_RUNTIME})

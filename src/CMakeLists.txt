@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 # GENERATE PUBLIC AND INTERNAL PROTOBUFS.
 #########################################
 include(MesosProtobuf)
@@ -667,7 +668,6 @@ if (ENABLE_PRECOMPILED_HEADERS)
   cotire(mesos-base)
 endif ()
 
-
 # THE MESOS LIBRARY
 ###################
 add_library(mesos ${MESOS_EXPORTED_SRC} ${MESOS_INTERNAL_SRC})
@@ -827,6 +827,19 @@ add_subdirectory(usage)
 if (NOT WIN32)
   add_subdirectory(resource_provider/storage)
 endif()
+
+install(
+  TARGETS
+    mesos-protobufs
+    mesos-protobufs-internal
+    mesos-base
+    mesos
+    mesos-agent-internal
+    mesos-master-internal
+    mesos-local-internal
+    mesos-scheduler
+  RUNTIME DESTINATION ${MESOS_INSTALL_RUNTIME}
+  LIBRARY DESTINATION ${MESOS_INSTALL_LIBRARIES})
 
 
 # BUILD THE MESOS TESTS.

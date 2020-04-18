@@ -21,3 +21,8 @@ target_link_libraries(mesos-master PRIVATE mesos-master-internal)
 if (ENABLE_JEMALLOC_ALLOCATOR)
   target_link_libraries(mesos-master PRIVATE jemalloc)
 endif ()
+
+install(
+  TARGETS mesos-master
+  RUNTIME DESTINATION ${MESOS_INSTALL_RUNTIME}
+)
