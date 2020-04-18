@@ -762,7 +762,7 @@ if (WIN32)
     URL               ${LIBAPR_URL}
     URL_HASH          ${LIBAPR_HASH})
 
-  install(FILES $<TARGET_FILE:libapr> DESTINATION ${3RDPARTY_LIBS_INSTALL_DIR})
+  install(FILES $<TARGET_FILE:apr> DESTINATION ${3RDPARTY_LIBS_INSTALL_DIR})
 else ()
   find_package(APR REQUIRED)
   add_library(apr SHARED IMPORTED)
