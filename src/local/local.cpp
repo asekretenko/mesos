@@ -66,7 +66,7 @@
 
 #include "common/protobuf_utils.hpp"
 
-#include "local.hpp"
+#include "local/local.hpp"
 
 #include "logging/flags.hpp"
 #include "logging/logging.hpp"

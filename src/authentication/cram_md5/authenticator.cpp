@@ -33,7 +33,7 @@
 #include <stout/hashmap.hpp>
 #include <stout/lambda.hpp>
 
-#include "authenticator.hpp"
+#include "authentication/cram_md5/authenticator.hpp"
 
 #include "authentication/cram_md5/auxprop.hpp"
 

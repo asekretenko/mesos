@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "jwt_secret_generator.hpp"
+#include "authentication/executor/jwt_secret_generator.hpp"
 
 #include <process/jwt.hpp>
 
