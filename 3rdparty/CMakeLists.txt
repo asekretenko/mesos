@@ -191,6 +191,469 @@ endfunction()
 # otherwise `find_package()` is used.
 ##########################################################################
 
+# zlib: A Massively Spiffy Yet Delicately Unobtrusive Compression Library.
+# https://zlib.net
+##########################################################################
+if (WIN32)
+  EXTERNAL(zlib ${ZLIB_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
+  add_library(zlib ${LIBRARY_LINKAGE} IMPORTED)
+  add_dependencies(zlib ${ZLIB_TARGET})
+
+  # Zlib generates different libraries depending on the linkage
+  # and configuration.  i.e.:
+  #   * For a static Debug build: `zlibstaticd.lib`.
+  #   * For a shared Release build: `zlib1.lib`.
+  if (NOT BUILD_SHARED_LIBS)
+    set(ZLIB_STATIC static)
+  else ()
+    set(ZLIB_SHARED 1)
+  endif ()
+
+  # NOTE: We install Zlib under `${ZLIB_ROOT}-lib` so CMake's `FindZLIB` module
+  # can find all required headers and library files.
+  set(ZLIB_CMAKE_ARGS
+    ${CMAKE_C_FORWARD_ARGS}
+    -DCMAKE_INSTALL_PREFIX=${ZLIB_ROOT}-lib)
+
+  set_target_properties(
+    zlib PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES ${ZLIB_ROOT}-lib/include)
+
+  if (CMAKE_GENERATOR MATCHES "Visual Studio")
+    set_target_properties(
+      zlib PROPERTIES
+      IMPORTED_LOCATION_DEBUG ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}d${ZLIB_SHARED}${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}${ZLIB_SHARED}${LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_DEBUG ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}d${CMAKE_IMPORT_LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_RELEASE ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}${CMAKE_IMPORT_LIBRARY_SUFFIX})
+  else ()
+    # This is for single-configuration generators such as Ninja.
+    if (CMAKE_BUILD_TYPE MATCHES Debug)
+      set(ZLIB_SUFFIX "d")
+    endif ()
+
+    set_target_properties(
+      zlib PROPERTIES
+      IMPORTED_LOCATION ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}${ZLIB_SUFFIX}${ZLIB_SHARED}${LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}${ZLIB_SUFFIX}${CMAKE_IMPORT_LIBRARY_SUFFIX})
+  endif ()
+
+  MAKE_INCLUDE_DIR(zlib)
+  GET_BYPRODUCTS(zlib)
+
+  ExternalProject_Add(
+    ${ZLIB_TARGET}
+    PREFIX            ${ZLIB_CMAKE_ROOT}
+    BUILD_BYPRODUCTS  ${ZLIB_BYPRODUCTS}
+    CMAKE_ARGS        ${ZLIB_CMAKE_ARGS}
+    INSTALL_DIR       ${ZLIB_ROOT}-lib
+    URL               ${ZLIB_URL}
+    URL_HASH          ${ZLIB_HASH})
+else ()
+  find_package(ZLIB REQUIRED)
+  add_library(zlib SHARED IMPORTED)
+
+  set_target_properties(
+    zlib PROPERTIES
+    IMPORTED_LOCATION ${ZLIB_LIBRARIES}
+    INTERFACE_INCLUDE_DIRECTORIES ${ZLIB_INCLUDE_DIRS})
+endif ()
+
+set_target_properties(
+  zlib PROPERTIES
+  INTERFACE_COMPILE_DEFINITIONS HAVE_LIBZ)
+
+# bzip2: A high-quality data compressor.
+# http://www.bzip.org
+########################################
+if (WIN32)
+  EXTERNAL(bzip2 ${BZIP2_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
+  add_library(bzip2 STATIC IMPORTED)
+  add_dependencies(bzip2 ${BZIP2_TARGET})
+
+  set_target_properties(
+    bzip2 PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${BZIP2_ROOT};${BZIP2_ROOT}-build")
+
+  if (CMAKE_GENERATOR MATCHES "Visual Studio")
+    set_target_properties(
+      bzip2 PROPERTIES
+      IMPORTED_LOCATION_DEBUG ${BZIP2_ROOT}-build/Debug/bzip2${BZIP2_SHARED}${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${BZIP2_ROOT}-build/Release/bzip2${BZIP2_SHARED}${LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_DEBUG ${BZIP2_ROOT}-build/Debug/bzip2${CMAKE_IMPORT_LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_RELEASE ${BZIP2_ROOT}-build/Release/bzip2${CMAKE_IMPORT_LIBRARY_SUFFIX})
+  else ()
+    set_target_properties(
+      bzip2 PROPERTIES
+      IMPORTED_LOCATION ${BZIP2_ROOT}-build/bzip2${BZIP2_SHARED}${LIBRARY_SUFFIX})
+  endif ()
+
+  PATCH_CMD(BZIP2_PATCH_CMD bzip2-${BZIP2_VERSION}.patch)
+
+  MAKE_INCLUDE_DIR(bzip2)
+  GET_BYPRODUCTS(bzip2)
+
+  set(BZIP2_CMAKE_ARGS
+    ${CMAKE_FORWARD_ARGS}
+    ${CMAKE_C_FORWARD_ARGS}
+    -DBZIP2_INSTALL_DIR=${BZIP2_ROOT}-lib)
+
+  ExternalProject_Add(
+    ${BZIP2_TARGET}
+    PREFIX            ${BZIP2_CMAKE_ROOT}
+    BUILD_BYPRODUCTS  ${BZIP2_BYPRODUCTS}
+    PATCH_COMMAND     ${BZIP2_PATCH_CMD}
+    CMAKE_ARGS        ${BZIP2_CMAKE_ARGS}
+    INSTALL_DIR       ${BZIP2_ROOT}-lib
+    URL               ${BZIP2_URL}
+    URL_HASH          ${BZIP2_HASH})
+endif ()
+
+# xz: A Massively Spiffy Yet Delicately Unobtrusive Compression Library.
+# https://tukaani.org/xz/
+########################################################################
+if (WIN32)
+  EXTERNAL(xz ${XZ_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
+  add_library(xz STATIC IMPORTED)
+  add_dependencies(xz ${XZ_TARGET})
+
+  set_target_properties(
+    xz PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${XZ_ROOT};${XZ_ROOT}-build")
+
+
+  if (CMAKE_GENERATOR MATCHES "Visual Studio")
+    set_target_properties(
+      xz PROPERTIES
+      IMPORTED_LOCATION_DEBUG ${XZ_ROOT}-build/Debug/lzma${XZ_SHARED}${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${XZ_ROOT}-build/Release/lzma${XZ_SHARED}${LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_DEBUG ${XZ_ROOT}-build/Debug/lzma${CMAKE_IMPORT_LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_RELEASE ${XZ_ROOT}-build/Release/lzma${CMAKE_IMPORT_LIBRARY_SUFFIX})
+  else ()
+    set_target_properties(
+      xz PROPERTIES
+      IMPORTED_LOCATION ${XZ_ROOT}-build/lzma${CMAKE_IMPORT_LIBRARY_SUFFIX})
+  endif ()
+
+  PATCH_CMD(XZ_PATCH_CMD xz-${XZ_VERSION}.patch)
+
+  MAKE_INCLUDE_DIR(xz)
+  GET_BYPRODUCTS(xz)
+
+  set(XZ_CMAKE_ARGS
+    ${CMAKE_FORWARD_ARGS}
+    ${CMAKE_C_FORWARD_ARGS}
+    -DXZ_INSTALL_DIR=${XZ_ROOT}-lib)
+
+  ExternalProject_Add(
+    ${XZ_TARGET}
+    PREFIX            ${XZ_CMAKE_ROOT}
+    BUILD_BYPRODUCTS  ${XZ_BYPRODUCTS}
+    PATCH_COMMAND     ${XZ_PATCH_CMD}
+    CMAKE_ARGS        ${XZ_CMAKE_ARGS}
+    INSTALL_DIR       ${XZ_ROOT}-lib
+    URL               ${XZ_URL}
+    URL_HASH          ${XZ_HASH})
+endif ()
+
+# libarchive: Multi-format archive and compression library.
+# https://github.com/libarchive/libarchive
+###########################################################
+if (NOT UNBUNDLED_LIBARCHIVE)
+  EXTERNAL(libarchive ${LIBARCHIVE_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
+
+  add_library(libarchive STATIC IMPORTED GLOBAL)
+  add_dependencies(libarchive ${LIBARCHIVE_TARGET})
+
+  set(LIBARCHIVE_CMAKE_ARGS
+    ${CMAKE_FORWARD_ARGS}
+    ${CMAKE_C_FORWARD_ARGS}
+    -DENABLE_ACL=OFF
+    -DENABLE_CNG=OFF
+    -DENABLE_CPIO=OFF
+    -DENABLE_EXPAT=OFF
+    -DENABLE_ICONV=OFF
+    -DENABLE_LibGCC=OFF
+    -DENABLE_LIBXML2=OFF
+    -DENABLE_LZO=OFF
+    -DENABLE_NETTLE=OFF
+    -DENABLE_OPENSSL=OFF
+    -DENABLE_PCREPOSIX=OFF
+    -DENABLE_TEST=OFF
+    -DCMAKE_PREFIX_PATH=${ZLIB_ROOT}-lib@@${BZIP2_ROOT}-lib@@${XZ_ROOT}-lib
+    -DCMAKE_INSTALL_PREFIX=${LIBARCHIVE_ROOT}-build)
+
+  PATCH_CMD(LIBARCHIVE_PATCH_CMD libarchive-${LIBARCHIVE_VERSION}.patch)
+
+  # NOTE: On Windows, libarchive is linked against several compression
+  # libraries included in the build chain, such as bzip2, xz, and zlib.
+  # On other platforms, libarchive links to zlib only, as bzip2 and xz
+  # are not in the build chain.
+  if (WIN32)
+    set_target_properties(
+      libarchive PROPERTIES
+      INTERFACE_COMPILE_DEFINITIONS LIBARCHIVE_STATIC
+      # NOTE: The install step avoids the need for separate DEBUG and
+      # RELEASE paths.
+      IMPORTED_LOCATION ${LIBARCHIVE_ROOT}-build/lib/archive_static${LIBRARY_SUFFIX}
+      INTERFACE_INCLUDE_DIRECTORIES ${LIBARCHIVE_ROOT}-build/include
+      INTERFACE_LINK_LIBRARIES "bzip2;xz;zlib")
+    set(LIBARCHIVE_DEPENDS bzip2 xz zlib)
+
+    # Make libarchive link against the same zlib the rest of the build
+    # links to. This is necessary because the zlib project
+    # unconditionally builds both shared and static libraries, and we
+    # need to be consistent about which is linked.
+    list(APPEND LIBARCHIVE_CMAKE_ARGS
+      -DZLIB_LIBRARY=$<TARGET_FILE:zlib>)
+  else ()
+    list(APPEND LIBARCHIVE_CMAKE_ARGS
+      -DENABLE_BZip2=OFF
+      -DENABLE_LZMA=OFF)
+
+    set_target_properties(
+      libarchive PROPERTIES
+      IMPORTED_LOCATION ${LIBARCHIVE_ROOT}-build/lib/libarchive${CMAKE_STATIC_LIBRARY_SUFFIX}
+      INTERFACE_INCLUDE_DIRECTORIES ${LIBARCHIVE_ROOT}-build/include
+      INTERFACE_LINK_LIBRARIES "zlib")
+    set(LIBARCHIVE_DEPENDS zlib)
+  endif ()
+
+  MAKE_INCLUDE_DIR(libarchive)
+  GET_BYPRODUCTS(libarchive)
+
+  ExternalProject_Add(
+    ${LIBARCHIVE_TARGET}
+    DEPENDS           ${LIBARCHIVE_DEPENDS}
+    PREFIX            ${LIBARCHIVE_CMAKE_ROOT}
+    BUILD_BYPRODUCTS  ${LIBARCHIVE_BYPRODUCTS}
+    PATCH_COMMAND     ${LIBARCHIVE_PATCH_CMD}
+    LIST_SEPARATOR    @@
+    CMAKE_ARGS        ${LIBARCHIVE_CMAKE_ARGS}
+    URL               ${LIBARCHIVE_URL}
+    URL_HASH          ${LIBARCHIVE_HASH})
+else ()
+  find_package(LIBARCHIVE REQUIRED)
+  add_library(libarchive SHARED IMPORTED GLOBAL)
+  set_target_properties(libarchive PROPERTIES
+    IMPORTED_LOCATION ${LIBARCHIVE_LIBS}
+    INTERFACE_INCLUDE_DIRECTORIES ${LIBARCHIVE_INCLUDE_DIR})
+endif ()
+
+# Protocol Buffers: Google's data interchange format.
+# https://developers.google.com/protocol-buffers/
+#####################################################
+EXTERNAL(protobuf ${PROTOBUF_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
+
+# TODO(andschwa): Move protobufs so these don't have to be GLOBAL.
+add_library(protobuf ${LIBRARY_LINKAGE} IMPORTED GLOBAL)
+
+add_dependencies(protobuf ${PROTOBUF_TARGET})
+add_executable(protoc IMPORTED GLOBAL)
+add_dependencies(protoc ${PROTOBUF_TARGET})
+
+set_target_properties(
+  protobuf PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES ${PROTOBUF_ROOT}/src)
+
+set(PROTOBUF_CMAKE_FORWARD_ARGS ${CMAKE_CXX_FORWARD_ARGS}
+  -Dprotobuf_BUILD_TESTS=OFF)
+
+if (WIN32)
+  PATCH_CMD(PROTOBUF_PATCH_CMD protobuf-${PROTOBUF_VERSION}.patch)
+
+  # Link to the CRT dynamically.
+  list(APPEND PROTOBUF_CMAKE_FORWARD_ARGS
+    -Dprotobuf_MSVC_STATIC_RUNTIME=OFF)
+
+  if (CMAKE_GENERATOR MATCHES "Visual Studio")
+    set_target_properties(
+      protobuf PROPERTIES
+      IMPORTED_LOCATION_DEBUG ${PROTOBUF_ROOT}-build/Debug/libprotobufd${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${PROTOBUF_ROOT}-build/Release/libprotobuf${LIBRARY_SUFFIX})
+
+    set_target_properties(
+      protoc PROPERTIES
+      IMPORTED_LOCATION_DEBUG ${PROTOBUF_ROOT}-build/Debug/protoc.exe
+      IMPORTED_LOCATION_RELEASE ${PROTOBUF_ROOT}-build/Release/protoc.exe)
+  else ()
+    # This is for single-configuration generators such as Ninja.
+    if (CMAKE_BUILD_TYPE MATCHES Debug)
+      set(PROTOBUF_SUFFIX "d")
+    endif ()
+
+    set_target_properties(
+      protobuf PROPERTIES
+      IMPORTED_LOCATION ${PROTOBUF_ROOT}-build/libprotobuf${PROTOBUF_SUFFIX}${LIBRARY_SUFFIX})
+
+    set_target_properties(
+      protoc PROPERTIES
+      IMPORTED_LOCATION ${PROTOBUF_ROOT}-build/protoc.exe)
+  endif ()
+else ()
+  # This is for single-configuration generators such as GNU Make.
+  if (CMAKE_BUILD_TYPE MATCHES Debug)
+    set(PROTOBUF_SUFFIX d)
+  endif ()
+
+  set_target_properties(
+    protobuf PROPERTIES
+    IMPORTED_LOCATION ${PROTOBUF_ROOT}-build/libprotobuf${PROTOBUF_SUFFIX}${LIBRARY_SUFFIX})
+
+  set_target_properties(
+    protoc PROPERTIES
+    IMPORTED_LOCATION ${PROTOBUF_ROOT}-build/protoc)
+endif ()
+
+MAKE_INCLUDE_DIR(protobuf)
+GET_BYPRODUCTS(protobuf)
+
+ExternalProject_Add(
+  ${PROTOBUF_TARGET}
+  PREFIX            ${PROTOBUF_CMAKE_ROOT}
+  PATCH_COMMAND     ${PROTOBUF_PATCH_CMD}
+  BUILD_BYPRODUCTS  ${PROTOBUF_BYPRODUCTS}
+  SOURCE_SUBDIR     cmake
+  CMAKE_ARGS        ${PROTOBUF_CMAKE_FORWARD_ARGS}
+  INSTALL_COMMAND   ${CMAKE_NOOP}
+  URL               ${PROTOBUF_URL}
+  URL_HASH          ${PROTOBUF_HASH})
+
+
+# gRPC: Google's high performance, open-source universal RPC framework.
+# https://grpc.io/
+#######################################################################
+EXTERNAL(grpc ${GRPC_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
+
+add_library(libgpr ${LIBRARY_LINKAGE} IMPORTED)
+add_dependencies(libgpr ${GRPC_TARGET})
+add_library(libgrpc ${LIBRARY_LINKAGE} IMPORTED)
+add_dependencies(libgrpc ${GRPC_TARGET})
+add_library(libgrpc++ ${LIBRARY_LINKAGE} IMPORTED)
+add_dependencies(libgrpc++ ${GRPC_TARGET})
+
+add_library(grpc INTERFACE)
+target_link_libraries(grpc INTERFACE libgrpc++ libgrpc libgpr)
+
+# TODO(chhsiao): Move grpc so these don't have to be GLOBAL.
+add_executable(grpc_cpp_plugin IMPORTED GLOBAL)
+add_dependencies(grpc_cpp_plugin ${GRPC_TARGET})
+
+set(GRPC_CMAKE_ARGS
+  ${CMAKE_C_FORWARD_ARGS}
+  ${CMAKE_CXX_FORWARD_ARGS}
+  -DCMAKE_PREFIX_PATH=${PROTOBUF_ROOT}-build
+  -DgRPC_PROTOBUF_PROVIDER=package
+  -DgRPC_PROTOBUF_PACKAGE_TYPE=CONFIG
+  -DgRPC_ZLIB_PROVIDER=package)
+
+if (ENABLE_SSL)
+  set(GRPC_VARIANT "")
+  list(APPEND GRPC_CMAKE_ARGS -DgRPC_SSL_PROVIDER=package ${CMAKE_SSL_FORWARD_ARGS})
+else ()
+  set(GRPC_VARIANT "_unsecure")
+  list(APPEND GRPC_CMAKE_ARGS -DgRPC_SSL_PROVIDER=none)
+endif ()
+
+set(GRPC_BUILD_CMD
+  ${CMAKE_COMMAND} --build . --config $<CONFIG> --target gpr &&
+  ${CMAKE_COMMAND} --build . --config $<CONFIG> --target grpc${GRPC_VARIANT} &&
+  ${CMAKE_COMMAND} --build . --config $<CONFIG> --target grpc++${GRPC_VARIANT} &&
+  ${CMAKE_COMMAND} --build . --config $<CONFIG> --target grpc_cpp_plugin)
+
+set_target_properties(
+  grpc PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES ${GRPC_ROOT}/include)
+
+PATCH_CMD(GRPC_PATCH_CMD grpc-${GRPC_VERSION}.patch)
+
+if (WIN32)
+  list(APPEND GRPC_CMAKE_ARGS -DZLIB_ROOT=${ZLIB_ROOT}-lib)
+
+  if (CMAKE_GENERATOR MATCHES "Visual Studio")
+    set_target_properties(
+      libgpr PROPERTIES
+      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/gpr${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/gpr${LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_DEBUG ${GRPC_ROOT}-build/Debug/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_RELEASE ${GRPC_ROOT}-build/Release/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX})
+
+    set_target_properties(
+      libgrpc PROPERTIES
+      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc${GRPC_VARIANT}${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc${GRPC_VARIANT}${LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_DEBUG ${GRPC_ROOT}-build/Debug/grpc${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_RELEASE ${GRPC_ROOT}-build/Release/grpc${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
+
+    set_target_properties(
+      libgrpc++ PROPERTIES
+      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc++${GRPC_VARIANT}${LIBRARY_SUFFIX}
+      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc++${GRPC_VARIANT}${LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_DEBUG ${GRPC_ROOT}-build/Debug/grpc++${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB_RELEASE ${GRPC_ROOT}-build/Release/grpc++${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
+
+    set_target_properties(
+      grpc_cpp_plugin PROPERTIES
+      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc_cpp_plugin.exe
+      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc_cpp_plugin.exe)
+  else ()
+    set_target_properties(
+      libgpr PROPERTIES
+      IMPORTED_LOCATION ${GRPC_ROOT}-build/gpr${LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB ${GRPC_ROOT}-build/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX})
+
+    set_target_properties(
+      libgrpc PROPERTIES
+      IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc${GRPC_VARIANT}${LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB ${GRPC_ROOT}-build/grpc${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
+
+    set_target_properties(
+      libgrpc++ PROPERTIES
+      IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc++${GRPC_VARIANT}${LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB ${GRPC_ROOT}-build/grpc++${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
+
+    set_target_properties(
+      grpc_cpp_plugin PROPERTIES
+      IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc_cpp_plugin.exe)
+  endif()
+else ()
+  set_target_properties(
+    libgpr PROPERTIES
+    IMPORTED_LOCATION ${GRPC_ROOT}-build/libgpr${LIBRARY_SUFFIX})
+
+  set_target_properties(
+    libgrpc PROPERTIES
+    IMPORTED_LOCATION ${GRPC_ROOT}-build/libgrpc${GRPC_VARIANT}${LIBRARY_SUFFIX})
+
+  set_target_properties(
+    libgrpc++ PROPERTIES
+    IMPORTED_LOCATION ${GRPC_ROOT}-build/libgrpc++${GRPC_VARIANT}${LIBRARY_SUFFIX})
+
+  set_target_properties(
+    grpc_cpp_plugin PROPERTIES
+    IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc_cpp_plugin)
+endif ()
+
+MAKE_INCLUDE_DIR(grpc)
+GET_BYPRODUCTS(libgpr)
+GET_BYPRODUCTS(libgrpc)
+GET_BYPRODUCTS(libgrpc++)
+GET_BYPRODUCTS(grpc_cpp_plugin)
+
+ExternalProject_Add(
+  ${GRPC_TARGET}
+  DEPENDS          protobuf protoc zlib
+  PREFIX           ${GRPC_CMAKE_ROOT}
+  PATCH_COMMAND    ${GRPC_PATCH_CMD}
+  BUILD_BYPRODUCTS ${LIBGPR_BYPRODUCTS};${LIBGRPC_BYPRODUCTS};${LIBGRPC++_BYPRODUCTS};${GRPC_CPP_PLUGIN_BYPRODUCTS}
+  CMAKE_ARGS       ${GRPC_CMAKE_ARGS}
+  BUILD_COMMAND    ${GRPC_BUILD_CMD}
+  INSTALL_COMMAND  ${CMAKE_NOOP}
+  URL              ${GRPC_URL}
+  URL_HASH         ${GRPC_HASH})
+
+
+
 # Boost: C++ Libraries.
 # http://www.boost.org
 #######################
@@ -902,255 +1365,6 @@ if (WIN32)
     URL                 ${WCLAYER_URL})
 endif ()
 
-# bzip2: A high-quality data compressor.
-# http://www.bzip.org
-########################################
-if (WIN32)
-  EXTERNAL(bzip2 ${BZIP2_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
-  add_library(bzip2 STATIC IMPORTED)
-  add_dependencies(bzip2 ${BZIP2_TARGET})
-
-  set_target_properties(
-    bzip2 PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${BZIP2_ROOT};${BZIP2_ROOT}-build")
-
-  if (CMAKE_GENERATOR MATCHES "Visual Studio")
-    set_target_properties(
-      bzip2 PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${BZIP2_ROOT}-build/Debug/bzip2${BZIP2_SHARED}${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${BZIP2_ROOT}-build/Release/bzip2${BZIP2_SHARED}${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_DEBUG ${BZIP2_ROOT}-build/Debug/bzip2${CMAKE_IMPORT_LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_RELEASE ${BZIP2_ROOT}-build/Release/bzip2${CMAKE_IMPORT_LIBRARY_SUFFIX})
-  else ()
-    set_target_properties(
-      bzip2 PROPERTIES
-      IMPORTED_LOCATION ${BZIP2_ROOT}-build/bzip2${BZIP2_SHARED}${LIBRARY_SUFFIX})
-  endif ()
-
-  PATCH_CMD(BZIP2_PATCH_CMD bzip2-${BZIP2_VERSION}.patch)
-
-  MAKE_INCLUDE_DIR(bzip2)
-  GET_BYPRODUCTS(bzip2)
-
-  set(BZIP2_CMAKE_ARGS
-    ${CMAKE_FORWARD_ARGS}
-    ${CMAKE_C_FORWARD_ARGS}
-    -DBZIP2_INSTALL_DIR=${BZIP2_ROOT}-lib)
-
-  ExternalProject_Add(
-    ${BZIP2_TARGET}
-    PREFIX            ${BZIP2_CMAKE_ROOT}
-    BUILD_BYPRODUCTS  ${BZIP2_BYPRODUCTS}
-    PATCH_COMMAND     ${BZIP2_PATCH_CMD}
-    CMAKE_ARGS        ${BZIP2_CMAKE_ARGS}
-    INSTALL_DIR       ${BZIP2_ROOT}-lib
-    URL               ${BZIP2_URL}
-    URL_HASH          ${BZIP2_HASH})
-endif ()
-
-# xz: A Massively Spiffy Yet Delicately Unobtrusive Compression Library.
-# https://tukaani.org/xz/
-########################################################################
-if (WIN32)
-  EXTERNAL(xz ${XZ_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
-  add_library(xz STATIC IMPORTED)
-  add_dependencies(xz ${XZ_TARGET})
-
-  set_target_properties(
-    xz PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${XZ_ROOT};${XZ_ROOT}-build")
-
-
-  if (CMAKE_GENERATOR MATCHES "Visual Studio")
-    set_target_properties(
-      xz PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${XZ_ROOT}-build/Debug/lzma${XZ_SHARED}${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${XZ_ROOT}-build/Release/lzma${XZ_SHARED}${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_DEBUG ${XZ_ROOT}-build/Debug/lzma${CMAKE_IMPORT_LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_RELEASE ${XZ_ROOT}-build/Release/lzma${CMAKE_IMPORT_LIBRARY_SUFFIX})
-  else ()
-    set_target_properties(
-      xz PROPERTIES
-      IMPORTED_LOCATION ${XZ_ROOT}-build/lzma${CMAKE_IMPORT_LIBRARY_SUFFIX})
-  endif ()
-
-  PATCH_CMD(XZ_PATCH_CMD xz-${XZ_VERSION}.patch)
-
-  MAKE_INCLUDE_DIR(xz)
-  GET_BYPRODUCTS(xz)
-
-  set(XZ_CMAKE_ARGS
-    ${CMAKE_FORWARD_ARGS}
-    ${CMAKE_C_FORWARD_ARGS}
-    -DXZ_INSTALL_DIR=${XZ_ROOT}-lib)
-
-  ExternalProject_Add(
-    ${XZ_TARGET}
-    PREFIX            ${XZ_CMAKE_ROOT}
-    BUILD_BYPRODUCTS  ${XZ_BYPRODUCTS}
-    PATCH_COMMAND     ${XZ_PATCH_CMD}
-    CMAKE_ARGS        ${XZ_CMAKE_ARGS}
-    INSTALL_DIR       ${XZ_ROOT}-lib
-    URL               ${XZ_URL}
-    URL_HASH          ${XZ_HASH})
-endif ()
-
-# zlib: A Massively Spiffy Yet Delicately Unobtrusive Compression Library.
-# https://zlib.net
-##########################################################################
-if (WIN32)
-  EXTERNAL(zlib ${ZLIB_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
-  add_library(zlib ${LIBRARY_LINKAGE} IMPORTED)
-  add_dependencies(zlib ${ZLIB_TARGET})
-
-  # Zlib generates different libraries depending on the linkage
-  # and configuration.  i.e.:
-  #   * For a static Debug build: `zlibstaticd.lib`.
-  #   * For a shared Release build: `zlib1.lib`.
-  if (NOT BUILD_SHARED_LIBS)
-    set(ZLIB_STATIC static)
-  else ()
-    set(ZLIB_SHARED 1)
-  endif ()
-
-  # NOTE: We install Zlib under `${ZLIB_ROOT}-lib` so CMake's `FindZLIB` module
-  # can find all required headers and library files.
-  set(ZLIB_CMAKE_ARGS
-    ${CMAKE_C_FORWARD_ARGS}
-    -DCMAKE_INSTALL_PREFIX=${ZLIB_ROOT}-lib)
-
-  set_target_properties(
-    zlib PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES ${ZLIB_ROOT}-lib/include)
-
-  if (CMAKE_GENERATOR MATCHES "Visual Studio")
-    set_target_properties(
-      zlib PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}d${ZLIB_SHARED}${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}${ZLIB_SHARED}${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_DEBUG ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}d${CMAKE_IMPORT_LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_RELEASE ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}${CMAKE_IMPORT_LIBRARY_SUFFIX})
-  else ()
-    # This is for single-configuration generators such as Ninja.
-    if (CMAKE_BUILD_TYPE MATCHES Debug)
-      set(ZLIB_SUFFIX "d")
-    endif ()
-
-    set_target_properties(
-      zlib PROPERTIES
-      IMPORTED_LOCATION ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}${ZLIB_SUFFIX}${ZLIB_SHARED}${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}${ZLIB_SUFFIX}${CMAKE_IMPORT_LIBRARY_SUFFIX})
-  endif ()
-
-  MAKE_INCLUDE_DIR(zlib)
-  GET_BYPRODUCTS(zlib)
-
-  ExternalProject_Add(
-    ${ZLIB_TARGET}
-    PREFIX            ${ZLIB_CMAKE_ROOT}
-    BUILD_BYPRODUCTS  ${ZLIB_BYPRODUCTS}
-    CMAKE_ARGS        ${ZLIB_CMAKE_ARGS}
-    INSTALL_DIR       ${ZLIB_ROOT}-lib
-    URL               ${ZLIB_URL}
-    URL_HASH          ${ZLIB_HASH})
-else ()
-  find_package(ZLIB REQUIRED)
-  add_library(zlib SHARED IMPORTED)
-
-  set_target_properties(
-    zlib PROPERTIES
-    IMPORTED_LOCATION ${ZLIB_LIBRARIES}
-    INTERFACE_INCLUDE_DIRECTORIES ${ZLIB_INCLUDE_DIRS})
-endif ()
-
-set_target_properties(
-  zlib PROPERTIES
-  INTERFACE_COMPILE_DEFINITIONS HAVE_LIBZ)
-
-# libarchive: Multi-format archive and compression library.
-# https://github.com/libarchive/libarchive
-###########################################################
-if (NOT UNBUNDLED_LIBARCHIVE)
-  EXTERNAL(libarchive ${LIBARCHIVE_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
-
-  add_library(libarchive STATIC IMPORTED GLOBAL)
-  add_dependencies(libarchive ${LIBARCHIVE_TARGET})
-
-  set(LIBARCHIVE_CMAKE_ARGS
-    ${CMAKE_FORWARD_ARGS}
-    ${CMAKE_C_FORWARD_ARGS}
-    -DENABLE_ACL=OFF
-    -DENABLE_CNG=OFF
-    -DENABLE_CPIO=OFF
-    -DENABLE_EXPAT=OFF
-    -DENABLE_ICONV=OFF
-    -DENABLE_LibGCC=OFF
-    -DENABLE_LIBXML2=OFF
-    -DENABLE_LZO=OFF
-    -DENABLE_NETTLE=OFF
-    -DENABLE_OPENSSL=OFF
-    -DENABLE_PCREPOSIX=OFF
-    -DENABLE_TEST=OFF
-    -DCMAKE_PREFIX_PATH=${ZLIB_ROOT}-lib@@${BZIP2_ROOT}-lib@@${XZ_ROOT}-lib
-    -DCMAKE_INSTALL_PREFIX=${LIBARCHIVE_ROOT}-build)
-
-  PATCH_CMD(LIBARCHIVE_PATCH_CMD libarchive-${LIBARCHIVE_VERSION}.patch)
-
-  # NOTE: On Windows, libarchive is linked against several compression
-  # libraries included in the build chain, such as bzip2, xz, and zlib.
-  # On other platforms, libarchive links to zlib only, as bzip2 and xz
-  # are not in the build chain.
-  if (WIN32)
-    set_target_properties(
-      libarchive PROPERTIES
-      INTERFACE_COMPILE_DEFINITIONS LIBARCHIVE_STATIC
-      # NOTE: The install step avoids the need for separate DEBUG and
-      # RELEASE paths.
-      IMPORTED_LOCATION ${LIBARCHIVE_ROOT}-build/lib/archive_static${LIBRARY_SUFFIX}
-      INTERFACE_INCLUDE_DIRECTORIES ${LIBARCHIVE_ROOT}-build/include
-      INTERFACE_LINK_LIBRARIES "bzip2;xz;zlib")
-    set(LIBARCHIVE_DEPENDS bzip2 xz zlib)
-
-    # Make libarchive link against the same zlib the rest of the build
-    # links to. This is necessary because the zlib project
-    # unconditionally builds both shared and static libraries, and we
-    # need to be consistent about which is linked.
-    list(APPEND LIBARCHIVE_CMAKE_ARGS
-      -DZLIB_LIBRARY=$<TARGET_FILE:zlib>)
-  else ()
-    list(APPEND LIBARCHIVE_CMAKE_ARGS
-      -DENABLE_BZip2=OFF
-      -DENABLE_LZMA=OFF)
-
-    set_target_properties(
-      libarchive PROPERTIES
-      IMPORTED_LOCATION ${LIBARCHIVE_ROOT}-build/lib/libarchive${CMAKE_STATIC_LIBRARY_SUFFIX}
-      INTERFACE_INCLUDE_DIRECTORIES ${LIBARCHIVE_ROOT}-build/include
-      INTERFACE_LINK_LIBRARIES "zlib")
-    set(LIBARCHIVE_DEPENDS zlib)
-  endif ()
-
-  MAKE_INCLUDE_DIR(libarchive)
-  GET_BYPRODUCTS(libarchive)
-
-  ExternalProject_Add(
-    ${LIBARCHIVE_TARGET}
-    DEPENDS           ${LIBARCHIVE_DEPENDS}
-    PREFIX            ${LIBARCHIVE_CMAKE_ROOT}
-    BUILD_BYPRODUCTS  ${LIBARCHIVE_BYPRODUCTS}
-    PATCH_COMMAND     ${LIBARCHIVE_PATCH_CMD}
-    LIST_SEPARATOR    @@
-    CMAKE_ARGS        ${LIBARCHIVE_CMAKE_ARGS}
-    URL               ${LIBARCHIVE_URL}
-    URL_HASH          ${LIBARCHIVE_HASH})
-else ()
-  find_package(LIBARCHIVE REQUIRED)
-  add_library(libarchive SHARED IMPORTED GLOBAL)
-  set_target_properties(libarchive PROPERTIES
-    IMPORTED_LOCATION ${LIBARCHIVE_LIBS}
-    INTERFACE_INCLUDE_DIRECTORIES ${LIBARCHIVE_INCLUDE_DIR})
-endif ()
-
 # Google Test: Google's C++ test framework (GoogleTest and GoogleMock).
 # https://github.com/google/googletest
 #######################################################################
@@ -1244,219 +1458,6 @@ ExternalProject_Add(
   INSTALL_COMMAND   ${CMAKE_NOOP}
   URL               ${GOOGLETEST_URL}
   URL_HASH          ${GOOGLETEST_HASH})
-
-
-# Protocol Buffers: Google's data interchange format.
-# https://developers.google.com/protocol-buffers/
-#####################################################
-EXTERNAL(protobuf ${PROTOBUF_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
-
-# TODO(andschwa): Move protobufs so these don't have to be GLOBAL.
-add_library(protobuf ${LIBRARY_LINKAGE} IMPORTED GLOBAL)
-
-add_dependencies(protobuf ${PROTOBUF_TARGET})
-add_executable(protoc IMPORTED GLOBAL)
-add_dependencies(protoc ${PROTOBUF_TARGET})
-
-set_target_properties(
-  protobuf PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES ${PROTOBUF_ROOT}/src)
-
-set(PROTOBUF_CMAKE_FORWARD_ARGS ${CMAKE_CXX_FORWARD_ARGS}
-  -Dprotobuf_BUILD_TESTS=OFF)
-
-if (WIN32)
-  PATCH_CMD(PROTOBUF_PATCH_CMD protobuf-${PROTOBUF_VERSION}.patch)
-
-  # Link to the CRT dynamically.
-  list(APPEND PROTOBUF_CMAKE_FORWARD_ARGS
-    -Dprotobuf_MSVC_STATIC_RUNTIME=OFF)
-
-  if (CMAKE_GENERATOR MATCHES "Visual Studio")
-    set_target_properties(
-      protobuf PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${PROTOBUF_ROOT}-build/Debug/libprotobufd${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${PROTOBUF_ROOT}-build/Release/libprotobuf${LIBRARY_SUFFIX})
-
-    set_target_properties(
-      protoc PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${PROTOBUF_ROOT}-build/Debug/protoc.exe
-      IMPORTED_LOCATION_RELEASE ${PROTOBUF_ROOT}-build/Release/protoc.exe)
-  else ()
-    # This is for single-configuration generators such as Ninja.
-    if (CMAKE_BUILD_TYPE MATCHES Debug)
-      set(PROTOBUF_SUFFIX "d")
-    endif ()
-
-    set_target_properties(
-      protobuf PROPERTIES
-      IMPORTED_LOCATION ${PROTOBUF_ROOT}-build/libprotobuf${PROTOBUF_SUFFIX}${LIBRARY_SUFFIX})
-
-    set_target_properties(
-      protoc PROPERTIES
-      IMPORTED_LOCATION ${PROTOBUF_ROOT}-build/protoc.exe)
-  endif ()
-else ()
-  # This is for single-configuration generators such as GNU Make.
-  if (CMAKE_BUILD_TYPE MATCHES Debug)
-    set(PROTOBUF_SUFFIX d)
-  endif ()
-
-  set_target_properties(
-    protobuf PROPERTIES
-    IMPORTED_LOCATION ${PROTOBUF_ROOT}-build/libprotobuf${PROTOBUF_SUFFIX}${LIBRARY_SUFFIX})
-
-  set_target_properties(
-    protoc PROPERTIES
-    IMPORTED_LOCATION ${PROTOBUF_ROOT}-build/protoc)
-endif ()
-
-MAKE_INCLUDE_DIR(protobuf)
-GET_BYPRODUCTS(protobuf)
-
-ExternalProject_Add(
-  ${PROTOBUF_TARGET}
-  PREFIX            ${PROTOBUF_CMAKE_ROOT}
-  PATCH_COMMAND     ${PROTOBUF_PATCH_CMD}
-  BUILD_BYPRODUCTS  ${PROTOBUF_BYPRODUCTS}
-  SOURCE_SUBDIR     cmake
-  CMAKE_ARGS        ${PROTOBUF_CMAKE_FORWARD_ARGS}
-  INSTALL_COMMAND   ${CMAKE_NOOP}
-  URL               ${PROTOBUF_URL}
-  URL_HASH          ${PROTOBUF_HASH})
-
-
-# gRPC: Google's high performance, open-source universal RPC framework.
-# https://grpc.io/
-#######################################################################
-EXTERNAL(grpc ${GRPC_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
-
-add_library(libgpr ${LIBRARY_LINKAGE} IMPORTED)
-add_dependencies(libgpr ${GRPC_TARGET})
-add_library(libgrpc ${LIBRARY_LINKAGE} IMPORTED)
-add_dependencies(libgrpc ${GRPC_TARGET})
-add_library(libgrpc++ ${LIBRARY_LINKAGE} IMPORTED)
-add_dependencies(libgrpc++ ${GRPC_TARGET})
-
-add_library(grpc INTERFACE)
-target_link_libraries(grpc INTERFACE libgrpc++ libgrpc libgpr)
-
-# TODO(chhsiao): Move grpc so these don't have to be GLOBAL.
-add_executable(grpc_cpp_plugin IMPORTED GLOBAL)
-add_dependencies(grpc_cpp_plugin ${GRPC_TARGET})
-
-set(GRPC_CMAKE_ARGS
-  ${CMAKE_C_FORWARD_ARGS}
-  ${CMAKE_CXX_FORWARD_ARGS}
-  -DCMAKE_PREFIX_PATH=${PROTOBUF_ROOT}-build
-  -DgRPC_PROTOBUF_PROVIDER=package
-  -DgRPC_PROTOBUF_PACKAGE_TYPE=CONFIG
-  -DgRPC_ZLIB_PROVIDER=package)
-
-if (ENABLE_SSL)
-  set(GRPC_VARIANT "")
-  list(APPEND GRPC_CMAKE_ARGS -DgRPC_SSL_PROVIDER=package ${CMAKE_SSL_FORWARD_ARGS})
-else ()
-  set(GRPC_VARIANT "_unsecure")
-  list(APPEND GRPC_CMAKE_ARGS -DgRPC_SSL_PROVIDER=none)
-endif ()
-
-set(GRPC_BUILD_CMD
-  ${CMAKE_COMMAND} --build . --config $<CONFIG> --target gpr &&
-  ${CMAKE_COMMAND} --build . --config $<CONFIG> --target grpc${GRPC_VARIANT} &&
-  ${CMAKE_COMMAND} --build . --config $<CONFIG> --target grpc++${GRPC_VARIANT} &&
-  ${CMAKE_COMMAND} --build . --config $<CONFIG> --target grpc_cpp_plugin)
-
-set_target_properties(
-  grpc PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES ${GRPC_ROOT}/include)
-
-PATCH_CMD(GRPC_PATCH_CMD grpc-${GRPC_VERSION}.patch)
-
-if (WIN32)
-  list(APPEND GRPC_CMAKE_ARGS -DZLIB_ROOT=${ZLIB_ROOT}-lib)
-
-  if (CMAKE_GENERATOR MATCHES "Visual Studio")
-    set_target_properties(
-      libgpr PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/gpr${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/gpr${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_DEBUG ${GRPC_ROOT}-build/Debug/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_RELEASE ${GRPC_ROOT}-build/Release/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX})
-
-    set_target_properties(
-      libgrpc PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc${GRPC_VARIANT}${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc${GRPC_VARIANT}${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_DEBUG ${GRPC_ROOT}-build/Debug/grpc${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_RELEASE ${GRPC_ROOT}-build/Release/grpc${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
-
-    set_target_properties(
-      libgrpc++ PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc++${GRPC_VARIANT}${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc++${GRPC_VARIANT}${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_DEBUG ${GRPC_ROOT}-build/Debug/grpc++${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_RELEASE ${GRPC_ROOT}-build/Release/grpc++${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
-
-    set_target_properties(
-      grpc_cpp_plugin PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc_cpp_plugin.exe
-      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc_cpp_plugin.exe)
-  else ()
-    set_target_properties(
-      libgpr PROPERTIES
-      IMPORTED_LOCATION ${GRPC_ROOT}-build/gpr${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB ${GRPC_ROOT}-build/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX})
-
-    set_target_properties(
-      libgrpc PROPERTIES
-      IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc${GRPC_VARIANT}${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB ${GRPC_ROOT}-build/grpc${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
-
-    set_target_properties(
-      libgrpc++ PROPERTIES
-      IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc++${GRPC_VARIANT}${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB ${GRPC_ROOT}-build/grpc++${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
-
-    set_target_properties(
-      grpc_cpp_plugin PROPERTIES
-      IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc_cpp_plugin.exe)
-  endif()
-else ()
-  set_target_properties(
-    libgpr PROPERTIES
-    IMPORTED_LOCATION ${GRPC_ROOT}-build/libgpr${LIBRARY_SUFFIX})
-
-  set_target_properties(
-    libgrpc PROPERTIES
-    IMPORTED_LOCATION ${GRPC_ROOT}-build/libgrpc${GRPC_VARIANT}${LIBRARY_SUFFIX})
-
-  set_target_properties(
-    libgrpc++ PROPERTIES
-    IMPORTED_LOCATION ${GRPC_ROOT}-build/libgrpc++${GRPC_VARIANT}${LIBRARY_SUFFIX})
-
-  set_target_properties(
-    grpc_cpp_plugin PROPERTIES
-    IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc_cpp_plugin)
-endif ()
-
-MAKE_INCLUDE_DIR(grpc)
-GET_BYPRODUCTS(libgpr)
-GET_BYPRODUCTS(libgrpc)
-GET_BYPRODUCTS(libgrpc++)
-GET_BYPRODUCTS(grpc_cpp_plugin)
-
-ExternalProject_Add(
-  ${GRPC_TARGET}
-  DEPENDS          protobuf protoc zlib
-  PREFIX           ${GRPC_CMAKE_ROOT}
-  PATCH_COMMAND    ${GRPC_PATCH_CMD}
-  BUILD_BYPRODUCTS ${LIBGPR_BYPRODUCTS};${LIBGRPC_BYPRODUCTS};${LIBGRPC++_BYPRODUCTS};${GRPC_CPP_PLUGIN_BYPRODUCTS}
-  CMAKE_ARGS       ${GRPC_CMAKE_ARGS}
-  BUILD_COMMAND    ${GRPC_BUILD_CMD}
-  INSTALL_COMMAND  ${CMAKE_NOOP}
-  URL              ${GRPC_URL}
-  URL_HASH         ${GRPC_HASH})
 
 
 # Jemalloc: General-purpose malloc implementation.
