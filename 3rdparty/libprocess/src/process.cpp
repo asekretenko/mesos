@@ -3842,7 +3842,8 @@ Future<Response> ProcessBase::_consume(
       Future<bool> authorization = true;
 
       if (authorization_callbacks.load() != nullptr) {
-        const string callback_path = path::join("/" + pid.id, name);
+        const string callback_path =
+          path::join("/" + pid.id, name, os::POSIX_PATH_SEPARATOR);
 
         synchronized (authorization_callbacks_mutex) {
           AuthorizationCallbacks* callbacks = authorization_callbacks.load();
