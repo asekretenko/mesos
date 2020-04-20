@@ -656,8 +656,8 @@ target_include_directories(mesos-base
 
 target_link_libraries(
   mesos-base
-  PUBLIC process mesos-protobufs
-  PRIVATE sasl2 mesos-protobufs-internal)
+  PUBLIC process mesos-protobufs mesos-protobufs-internal
+  PRIVATE sasl2)
 
 if (ENABLE_PRECOMPILED_HEADERS)
   set_target_properties(
@@ -697,7 +697,6 @@ target_include_directories(
 target_link_libraries(
   mesos
   PUBLIC mesos-base zookeeper
-  PRIVATE mesos-protobufs-internal
 )
 
 if(HAS_JAVA)
