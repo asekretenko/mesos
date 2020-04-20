@@ -14,6 +14,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+function(FLATTEN_SOURCES OUTPUT SOURCES_ROOT SOURCES)
+  SET(FLATTENED_DIR ${CMAKE_BINARY_DIR}/src/flattened/${OUTPUT})
+
+  SET(FLATTENED_SOURCES)
+
+  foreach(SRC_ ${SOURCES})
+    if (IS_ABSOLUTE ${SRC_})
+      file(RELATIVE_PATH SRC "${SOURCES_ROOT}" "${SRC_}")
+    else()
+      set(SRC ${SRC_})
+    endif()
+
+    string(REPLACE "/" "_" FLATTENED_SRC "${SRC}")
+    set(DST "${FLATTENED_DIR}/${FLATTENED_SRC}")
+
+    add_custom_command(
+      OUTPUT ${DST}
+      COMMAND ${CMAKE_COMMAND} -E copy "${SOURCES_ROOT}/${SRC}" ${DST}
+      DEPENDS ${SRC_})
+
+    list(APPEND FLATTENED_SOURCES ${DST})
+  endforeach()
+
+  SET(${OUTPUT} ${FLATTENED_SOURCES} PARENT_SCOPE)
+endfunction()
+
+
 # GENERATE PUBLIC AND INTERNAL PROTOBUFS.
 #########################################
 include(MesosProtobuf)
@@ -115,10 +142,13 @@ else ()
   set(MESOS_PROTOBUFS_LINKAGE SHARED)
 endif ()
 
+set(PROTOBUF_SRCS ${PUBLIC_PROTOBUF_SRC})
+list(APPEND PROTOBUF_SRCS ${INTERNAL_PROTOBUF_SRC})
+FLATTEN_SOURCES(FLATTENED_PROTOBUF_SRCS "${CMAKE_BINARY_DIR}" "${PROTOBUF_SRCS}")
+
 add_library(
   mesos-protobufs ${MESOS_PROTOBUFS_LINKAGE}
-  ${PUBLIC_PROTOBUF_SRC}
-  ${INTERNAL_PROTOBUF_SRC})
+  ${FLATTENED_PROTOBUF_SRCS})
 
 target_link_libraries(mesos-protobufs PUBLIC
   protobuf
@@ -594,10 +624,11 @@ if (WIN32)
   SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/src/.libs)
 endif ()
 
-
 # THE MESOS LIBRARY
 ###################
-add_library(mesos ${MESOS_SRC})
+FLATTEN_SOURCES(FLATTENED_MESOS_SRC "${CMAKE_CURRENT_SOURCE_DIR}" "${MESOS_SRC}")
+
+add_library(mesos ${FLATTENED_MESOS_SRC})
 
 set_target_properties(
   mesos PROPERTIES
