@@ -21,7 +21,7 @@
 #include <stout/nothing.hpp>
 
 #include "event_loop.hpp"
-#include "libev.hpp"
+#include "posix/libev/libev.hpp"
 
 namespace process {
 

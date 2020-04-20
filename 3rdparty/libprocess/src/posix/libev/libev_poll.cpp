@@ -19,7 +19,7 @@
 
 #include <stout/lambda.hpp>
 
-#include "libev.hpp"
+#include "posix/libev/libev.hpp"
 
 namespace process {
 

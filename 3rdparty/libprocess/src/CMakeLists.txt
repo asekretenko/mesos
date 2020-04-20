@@ -28,6 +28,27 @@ if (ENABLE_SSL)
   endif ()
 endif ()
 
+# TODO(asekretenko): This is a copy of a similar function in  src/CMakeLists.txt
+function(FLATTEN_SOURCES OUTPUT PREFIX SOURCES)
+  SET(FLATTENED_DIR ${CMAKE_BINARY_DIR}/src/flattened/${OUTPUT})
+
+  SET(FLATTENED_SOURCES)
+
+  foreach(SRC ${SOURCES})
+    string(REPLACE "/" "_" FLATTENED_SRC ${SRC})
+    set(DST "${FLATTENED_DIR}/${FLATTENED_SRC}")
+
+    add_custom_command(
+      OUTPUT ${DST}
+      COMMAND ${CMAKE_COMMAND} -E copy "${PREFIX}/${SRC}" ${DST}
+      DEPENDS ${SRC})
+
+    list(APPEND FLATTENED_SOURCES ${DST})
+  endforeach()
+
+  SET(${OUTPUT} ${FLATTENED_SOURCES} PARENT_SCOPE)
+endfunction()
+
 
 # SOURCE FILES FOR THE PROCESS LIBRARY.
 #######################################
@@ -104,7 +125,9 @@ if (ENABLE_SSL)
   endif ()
 endif ()
 
-add_library(process ${PROCESS_SRC})
+FLATTEN_SOURCES(FLATTENED_PROCESS_SRC "${CMAKE_CURRENT_SOURCE_DIR}" "${PROCESS_SRC}")
+
+add_library(process ${FLATTENED_PROCESS_SRC})
 
 target_link_libraries(
   process PUBLIC
