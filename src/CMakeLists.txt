@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include("../cmake/IntermediateObjectLibraries.cmake")
+
 # GENERATE PUBLIC AND INTERNAL PROTOBUFS.
 #########################################
 include(MesosProtobuf)
@@ -597,15 +599,7 @@ endif ()
 
 # THE MESOS LIBRARY
 ###################
-add_library(mesos ${MESOS_SRC})
-
-set_target_properties(
-  mesos PROPERTIES
-  VERSION ${MESOS_PACKAGE_VERSION}
-  SOVERSION ${MESOS_PACKAGE_SOVERSION})
-
-target_compile_definitions(
-  mesos PUBLIC
+set(MESOS_COMPILE_DEFINITIONS
   USE_CMAKE_BUILD_CONFIG
   $<$<BOOL:${ENABLE_XFS_DISK_ISOLATOR}>:ENABLE_XFS_DISK_ISOLATOR>
   $<$<BOOL:${ENABLE_LAUNCHER_SEALING}>:ENABLE_LAUNCHER_SEALING>
@@ -614,29 +608,51 @@ target_compile_definitions(
   $<$<BOOL:${ENABLE_NETWORK_PORTS_ISOLATOR}>:ENABLE_NETWORK_PORTS_ISOLATOR>
   $<$<BOOL:${ENABLE_SECCOMP_ISOLATOR}>:ENABLE_SECCOMP_ISOLATOR>)
 
-target_include_directories(
-  mesos PUBLIC
+set(MESOS_INCLUDE_DIRECTORIES
   ${MESOS_PUBLIC_INCLUDE_DIR}
   ${MESOS_BIN_INCLUDE_DIR}
   ${MESOS_BIN_SRC_DIR}
   ${MESOS_SRC_DIR})
 
-target_link_libraries(
-  mesos PUBLIC
+set(MESOS_LINK_LIBRARIES
   process
   sasl2
   zookeeper
-  mesos-protobufs
-  $<$<AND:$<PLATFORM_ID:Linux>,$<BOOL:${ENABLE_NVML}>>:nvml>
-  $<$<BOOL:${HAS_JAVA}>:mesos-java>)
+  mesos-protobufs)
+
+if(ENABLE_NVML AND LINUX)
+  list(APPEND MESOS_LINK_LIBRARIES nvml)
+endif()
+
+if(HAS_JAVA)
+  list(APPEND MESOS_LINK_LIBRARIES mesos-java)
+endif()
 
 if (NOT WIN32)
-  target_link_libraries(mesos PUBLIC leveldb)
+  list(APPEND MESOS_LINK_LIBRARIES leveldb)
 endif ()
 
 if (ENABLE_SECCOMP_ISOLATOR)
-  target_link_libraries(mesos PUBLIC libseccomp)
+  list(APPEND MESOS_LINK_LIBRARIES libseccomp)
 endif ()
+
+INTERMEDIATE_OBJECT_LIBRARIES(
+  MESOS_OBJECTS
+  "${MESOS_SRC}"
+  "${MESOS_LINK_LIBRARIES}"
+  "${MESOS_INCLUDE_DIRECTORIES}"
+  "${MESOS_COMPILE_DEFINITIONS}")
+
+add_library(mesos ${MESOS_OBJECTS})
+
+set_target_properties(
+  mesos PROPERTIES
+  VERSION ${MESOS_PACKAGE_VERSION}
+  SOVERSION ${MESOS_PACKAGE_SOVERSION})
+
+target_compile_definitions(mesos PUBLIC ${MESOS_COMPILE_DEFINITIONS})
+target_include_directories(mesos PUBLIC ${MESOS_INCLUDE_DIRECTORIES})
+target_link_libraries(mesos PUBLIC ${MESOS_LINK_LIBRARIES})
 
 if (ENABLE_PRECOMPILED_HEADERS)
   set_target_properties(
