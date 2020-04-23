@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include("../../../cmake/IntermediateObjectLibraries.cmake")
+
 # OpenSSL: Cryptography and SSL/TLS Toolkit.
 # https://www.openssl.org
 ############################################
@@ -104,28 +106,56 @@ if (ENABLE_SSL)
   endif ()
 endif ()
 
-add_library(process ${PROCESS_SRC})
-
-target_link_libraries(
-  process PUBLIC
+set(PROCESS_PUBLIC_LINK_LIBRARIES
   stout
   http_parser
-  grpc
-  $<$<BOOL:${ENABLE_SSL}>:OpenSSL::SSL>
-  $<$<BOOL:${ENABLE_SSL}>:OpenSSL::Crypto>)
+  grpc)
 
-target_link_libraries(
-  process PRIVATE
-  concurrentqueue
-  $<IF:$<BOOL:${ENABLE_LIBEVENT}>,libevent,$<$<NOT:$<PLATFORM_ID:Windows>>:libev>>)
+if (ENABLE_SSL)
+  list(APPEND PROCESS_PUBLIC_LINK_LIBRARIES OpenSSL::SSL)
+  list(APPEND PROCESS_PUBLIC_LINK_LIBRARIES OpenSSL::Crypto)
+endif()
 
-target_compile_definitions(
-  process PRIVATE
+set(PROCESS_PRIVATE_LINK_LIBRARIES concurrentqueue)
+if(ENABLE_LIBEVENT)
+  list(APPEND PROCESS_PRIVATE_LINK_LIBRARIES libevent)
+else()
+  if(NOT WIN32)
+    list(APPEND PROCESS_PRIVATE_LINK_LIBRARIES libev)
+  endif()
+endif()
+
+set(PROCESS_LINK_LIBRARIES ${PROCESS_PUBLIC_LINK_LIBRARIES})
+list(APPEND PROCESS_LINK_LIBRARIES ${PROCESS_PRIVATE_LINK_LIBRARIES})
+
+set(PROCESS_PRIVATE_COMPILE_DEFINITIONS
   $<$<AND:$<PLATFORM_ID:Windows>,$<NOT:$<BOOL:${ENABLE_LIBEVENT}>>>:ENABLE_LIBWINIO>
   $<$<BOOL:${ENABLE_LOCK_FREE_RUN_QUEUE}>:LOCK_FREE_RUN_QUEUE>
   $<$<BOOL:${ENABLE_LOCK_FREE_EVENT_QUEUE}>:LOCK_FREE_EVENT_QUEUE>
   $<$<BOOL:${ENABLE_LAST_IN_FIRST_OUT_FIXED_SIZE_SEMAPHORE}>:LAST_IN_FIRST_OUT_FIXED_SIZE_SEMAPHORE>
   $<$<PLATFORM_ID:LINUX>:LIBPROCESS_ALLOW_JEMALLOC>)
 
-target_include_directories(process PUBLIC ../include)
-target_include_directories(process PRIVATE .)
+set(PROCESS_PUBLIC_INCLUDE_DIRECTORIES ../include)
+set(PROCESS_PRIVATE_INCLUDE_DIRECTORIES .)
+
+set(PROCESS_INCLUDE_DIRECTORIES ${PROCESS_PUBLIC_INCLUDE_DIRECTORIES})
+list(APPEND PROCESS_INCLUDE_DIRECTORIES ${PROCESS_PRIVATE_INCLUDE_DIRECTORIES})
+
+INTERMEDIATE_OBJECT_LIBRARIES(
+  PROCESS_OBJECTS
+  "${PROCESS_SRC}"
+  "${PROCESS_LINK_LIBRARIES}"
+  "${PROCESS_INCLUDE_DIRECTORIES}"
+  "${PROCESS_PRIVATE_COMPILE_DEFINITIONS}")
+
+add_library(process ${PROCESS_OBJECTS})
+
+target_link_libraries(process PUBLIC ${PROCESS_PUBLIC_LINK_LIBRARIES})
+target_link_libraries(process PRIVATE ${PROCESS_PRIVATE_LINK_LIBRARIES})
+
+target_compile_definitions(process
+  PRIVATE ${PROCESS_PRIVATE_COMPILE_DEFINITIONS})
+
+target_include_directories(process PUBLIC ${PROCESS_PUBLIC_INCLUDE_DIRECTORIES})
+target_include_directories(process
+  PRIVATE ${PROCESS_PRIVATE_INCLUDE_DIRECTORIES})
