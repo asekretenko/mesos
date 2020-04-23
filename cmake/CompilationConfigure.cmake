@@ -67,6 +67,13 @@ if (CMAKE_GENERATOR MATCHES "Visual Studio")
 endif ()
 
 
+# TODO(asekretenko): Consider making Mesos tests a separate project
+# that would depend on Mesos installation.
+option(MESOS_INSTALL_TESTS
+  "Add tests executables and their dependences to the install step."
+  FALSE)
+
+
 # 3RDPARTY OPTIONS.
 ###################
 option(
