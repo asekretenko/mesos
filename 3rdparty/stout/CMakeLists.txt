@@ -19,8 +19,7 @@ find_package(Threads REQUIRED)
 add_library(stout INTERFACE)
 target_include_directories(stout INTERFACE include)
 
-target_link_libraries(
-  stout INTERFACE
+set(STOUT_DEPENDENCIES
   apr
   boost
   elfio
@@ -36,5 +35,12 @@ target_link_libraries(
   $<$<PLATFORM_ID:Darwin>:svn>
   $<$<PLATFORM_ID:Windows>:Ws2_32 IPHlpAPI Mswsock Secur32 Userenv>
   $<$<PLATFORM_ID:FreeBSD>:svn>)
+
+target_link_libraries(stout INTERFACE ${STOUT_DEPENDENCIES})
+
+# TODO(asekretenko): Remove this when the bug in propagaiting dependencies of
+# INTERFACE libraries is fixed.
+# See https://gitlab.kitware.com/cmake/cmake/issues/18203.
+add_dependencies(stout ${STOUT_DEPENDENCIES})
 
 add_subdirectory(tests)
