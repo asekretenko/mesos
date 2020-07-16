@@ -274,12 +274,32 @@ message AttributeConstraint {
     // Yields `true` if the (pseudo)attribute does not exist.
     message NotExists {}
 
-    // TODO(asekretenko): add predicates for testing equality (MESOS-10172)
-    // and regular expression matching (MESOS-10173).
+    // Yields `true` if the (pseudo)attribute exists and either
+    // is not a TEXT (string for pseudoattributes) or is a TEXT/string
+    // not equal to the specified value.
+    message NonStringOrEqualsString {
+      required string value = 1;
+    }
+
+    // Yields `true` if the (pseudo)attribute does not exist or
+    // is not a TEXT (string for pseudoattributes) or is a TEXT/string
+    // not equal to the specified value.
+    //
+    // Note that if the (pseudo)attribute is not a TEXT/string, both
+    // `NonStringOrEqualsString` and `NotEqualsString` yield `true`.
+    message NotEqualsString {
+      required string value = 1;
+    }
+
+    // TODO(asekretenko): add predicates for regular expression matching
+    // (MESOS-10173).
 
     oneof predicate {
       Exists exists = 1;
       NotExists not_exists = 2;
+
+      NonStringOrEqualsString non_string_or_equals_string = 3;
+      NotEqualsString not_equals_string = 4;
     }
   }
 
