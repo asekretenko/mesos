@@ -291,8 +291,33 @@ message AttributeConstraint {
       required string value = 1;
     }
 
-    // TODO(asekretenko): add predicates for regular expression matching
-    // (MESOS-10173).
+    // Predicates for regular expression constraints.
+    //
+    // The regular expressions are interpreted according to
+    // RE2 regular expression syntax and semantics:
+    // https://github.com/google/re2/blob/master/doc/syntax.txt
+    //
+    // The call using the constraints is not valid  if the specified
+    // string is not a valid RE2 regex, or if the resulting regex will have
+    // too large memory footprint or the regexp program size reported by
+    // `RE2::ProgramSize()` is too large.
+
+    // Yields `true` if the (pseudo)attribute exists and either
+    // is not a TEXT (string for pseudoattributes) or is a TEXT/string
+    // matching the specified regex.
+    message NonStringOrMatchesRegex {
+      required string regex = 1;
+    }
+
+    // Yields `true` if the (pseudo)attribute does not exists or and either
+    // is not a TEXT (string for pseudoattributes) or is a TEXT/string
+    // not matching the specified regex.
+    //
+    // Note that if the (pseudo)attribute exists, but is not a TEXT/string,
+    // both `NonStringOrMatchesRegex` and `NotMatchesRegex` yield `true`.
+    message NotMatchesRegex {
+      required string regex = 1;
+    }
 
     oneof predicate {
       Exists exists = 1;
@@ -300,6 +325,9 @@ message AttributeConstraint {
 
       NonStringOrEqualsString non_string_or_equals_string = 3;
       NotEqualsString not_equals_string = 4;
+
+      NonStringOrMatchesRegex non_string_or_matches_regex = 5;
+      NotMatchesRegex not_matches_regex = 6;
     }
   }
 
