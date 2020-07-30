@@ -59,7 +59,8 @@ set(STOUT_ROOT_TESTS_SRC
   uri_tests.cpp
   uuid_tests.cpp
   variant_tests.cpp
-  version_tests.cpp)
+  version_tests.cpp
+  weak_cache_tests.cpp)
 
 if (NOT WIN32)
   list(APPEND STOUT_ROOT_TESTS_SRC

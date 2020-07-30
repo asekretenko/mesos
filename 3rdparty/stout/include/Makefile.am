@@ -243,6 +243,7 @@ nobase_include_HEADERS =			\
   stout/uuid.hpp				\
   stout/variant.hpp				\
   stout/version.hpp				\
+  stout/weak_cache.hpp				\
   stout/windows.hpp				\
   stout/windows/dynamiclibrary.hpp		\
   stout/windows/error.hpp			\
