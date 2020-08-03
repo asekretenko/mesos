@@ -78,8 +78,7 @@ class OfferConstraintsFilterImpl;
 class OfferConstraintsFilter
 {
 public:
-  static Try<OfferConstraintsFilter> create(
-      scheduler::OfferConstraints&& constraints);
+  class FactoryImpl; // Needs access to the private constructor.
 
   OfferConstraintsFilter() = delete;
 
@@ -103,6 +102,33 @@ private:
   std::unique_ptr<internal::OfferConstraintsFilterImpl> impl;
 
   OfferConstraintsFilter(internal::OfferConstraintsFilterImpl&& impl_);
+};
+
+
+class OfferConstraintsFilterFactory
+{
+public:
+  OfferConstraintsFilterFactory();
+  OfferConstraintsFilterFactory(OfferConstraintsFilterFactory&&) = delete;
+  OfferConstraintsFilterFactory& operator()(OfferConstraintsFilterFactory&&) =
+    delete;
+
+  ~OfferConstraintsFilterFactory();
+
+  /**
+   * Returns a function that constructs an `OfferConstraintsFilter` from
+   * the API message.
+   *
+   * The filters constructed by the same factory share some of immutable parts
+   * of their state (currently, this is limited to the RE2 objects
+   * corresponding to the same regular expression). This way, using the same
+   * factory to create all filters reduces memory footprint
+   * of the filters and, potentially, improves perormance.
+   */
+  Try<OfferConstraintsFilter> operator()(scheduler::OfferConstraints&&);
+
+private:
+  std::unique_ptr<OfferConstraintsFilter::FactoryImpl> impl;
 };
 
 

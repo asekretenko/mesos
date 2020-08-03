@@ -34,6 +34,7 @@ using ::mesos::Attributes;
 using ::mesos::SlaveInfo;
 
 using ::mesos::allocator::OfferConstraintsFilter;
+using ::mesos::allocator::OfferConstraintsFilterFactory;
 
 using ::mesos::scheduler::OfferConstraints;
 
@@ -78,7 +79,7 @@ TEST(OfferConstraintsFilter, NamedAttributeExists)
   ASSERT_SOME(constraints);
 
   const Try<OfferConstraintsFilter> filter =
-    OfferConstraintsFilter::create(std::move(*constraints));
+    OfferConstraintsFilterFactory()(std::move(*constraints));
 
   ASSERT_SOME(filter);
 
@@ -113,7 +114,7 @@ TEST(OfferConstraintsFilter, NamedAttributeNotExists)
   ASSERT_SOME(constraints);
 
   const Try<OfferConstraintsFilter> filter =
-    OfferConstraintsFilter::create(std::move(*constraints));
+    OfferConstraintsFilterFactory()(std::move(*constraints));
 
   ASSERT_SOME(filter);
 
@@ -148,7 +149,7 @@ TEST(OfferConstraintsFilter, NamedAttributeNonStringOrEqualsString)
   ASSERT_SOME(constraints);
 
   const Try<OfferConstraintsFilter> filter =
-    OfferConstraintsFilter::create(std::move(*constraints));
+    OfferConstraintsFilterFactory()(std::move(*constraints));
 
   ASSERT_SOME(filter);
 
@@ -193,7 +194,7 @@ TEST(OfferConstraintsFilter, NamedAttributeNotEqualsString)
   ASSERT_SOME(constraints);
 
   const Try<OfferConstraintsFilter> filter =
-    OfferConstraintsFilter::create(std::move(*constraints));
+    OfferConstraintsFilterFactory()(std::move(*constraints));
 
   ASSERT_SOME(filter);
 
@@ -239,7 +240,7 @@ TEST(OfferConstraintsFilter, TwoAttributesWithTheSameName)
   ASSERT_SOME(constraints);
 
   const Try<OfferConstraintsFilter> filter =
-    OfferConstraintsFilter::create(std::move(*constraints));
+    OfferConstraintsFilterFactory()(std::move(*constraints));
 
   ASSERT_SOME(filter);
 
@@ -285,7 +286,7 @@ TEST(OfferConstraintsFilter, TwoConstraintsInGroup)
   ASSERT_SOME(constraints);
 
   const Try<OfferConstraintsFilter> filter =
-    OfferConstraintsFilter::create(std::move(*constraints));
+    OfferConstraintsFilterFactory()(std::move(*constraints));
 
   ASSERT_SOME(filter);
 
@@ -333,7 +334,7 @@ TEST(OfferConstraintsFilter, TwoGroups)
   ASSERT_SOME(constraints);
 
   const Try<OfferConstraintsFilter> filter =
-    OfferConstraintsFilter::create(std::move(*constraints));
+    OfferConstraintsFilterFactory()(std::move(*constraints));
 
   ASSERT_SOME(filter);
 
@@ -378,7 +379,7 @@ TEST(OfferConstraintsFilter, TwoRoles)
   ASSERT_SOME(constraints);
 
   const Try<OfferConstraintsFilter> filter =
-    OfferConstraintsFilter::create(std::move(*constraints));
+    OfferConstraintsFilterFactory()(std::move(*constraints));
 
   ASSERT_SOME(filter);
 

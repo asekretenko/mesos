@@ -19,13 +19,18 @@
 #include <unordered_map>
 #include <vector>
 
+#include <stout/cache.hpp>
 #include <stout/option.hpp>
 #include <stout/try.hpp>
 #include <stout/variant.hpp>
+#include <stout/weak_cache.hpp>
+
+#include <re2/re2.h>
 
 #include <mesos/allocator/allocator.hpp>
 #include <mesos/attributes.hpp>
 
+using std::shared_ptr;
 using std::string;
 using std::vector;
 using std::unique_ptr;
@@ -38,6 +43,45 @@ namespace mesos {
 namespace allocator {
 
 namespace internal {
+
+constexpr static size_t RE2_LRU_CACHE_SIZE = 1024;
+constexpr static int64_t RE2_MAX_MEM = 4096;
+constexpr static int RE2_MAX_PROGRAM_SIZE = 100;
+
+class RE2Factory
+{
+  // Caching factory for RE2 regexps.
+  //
+  // RE2s are cached by storing:
+  // 1. Strong references to RE2s recently handed out, regardless of whether
+  //    they are referenced elsewhere or not.
+  Cache<string, shared_ptr<const RE2>> lruCache{RE2_LRU_CACHE_SIZE};
+
+  // 2. Weak references to all RE2s that have ever been handed out by get()
+  //    and are still strongly referenced somewhere (including `lruCache`).
+  WeakCache<string, const RE2> weakCache;
+
+public:
+  shared_ptr<const RE2> operator()(const string& regex)
+  {
+    Option<shared_ptr<const RE2>> recent = lruCache.get(regex);
+    if (recent.isSome()) {
+      return *std::move(recent);
+    }
+
+    const shared_ptr<const RE2> re2 = weakCache.get(regex, [&regex]() {
+      RE2::Options options {RE2::CannedOptions::Quiet};
+      options.set_max_mem(RE2_MAX_MEM);
+      return std::unique_ptr<const RE2>(new RE2(regex, options));
+    });
+
+    // NOTE: Invalid re2s are cached as well; in many cases they may be no less
+    // expensive to construct than the valid ones.
+    lruCache.put(regex, re2);
+    return re2;
+  }
+};
+
 
 using Selector = AttributeConstraint::Selector;
 
@@ -70,6 +114,30 @@ static Option<Error> validate(const Selector& selector)
 }
 
 
+static Option<Error> validateRE2(const RE2& re2){
+  if (!re2.ok()) {
+    return Error(
+        "Failed to construct regex from pattern '" + re2.pattern() +
+        "': " + re2.error());
+  }
+
+  if (re2.ProgramSize() > RE2_MAX_PROGRAM_SIZE) {
+    return Error("Regex '" + re2.pattern() + "' is too complex.");
+  }
+
+  return None();
+}
+
+
+// An equivalent of RE2::fullMatch(), which, as of RE2 2020-07-06, is slightly
+// faster with gcc -O2 due to the fact that the latter unconditionally zeroes
+// internal arrays for returning submatches, about which we do not care.
+static bool fullMatch(const string& str, const RE2& re2)
+{
+  return re2.Match(str, 0, str.size(), RE2::ANCHOR_BOTH, nullptr, 0);
+}
+
+
 class AttributeConstraintPredicate
 {
 public:
@@ -78,7 +146,8 @@ public:
   bool apply(const Attribute& attr) const { return apply_(attr); }
 
   static Try<AttributeConstraintPredicate> create(
-      AttributeConstraint::Predicate&& predicate)
+      AttributeConstraint::Predicate&& predicate,
+      RE2Factory* re2Factory)
   {
     using Self = AttributeConstraintPredicate;
 
@@ -96,6 +165,30 @@ public:
       case AttributeConstraint::Predicate::kNotEqualsString:
         return Self(NotEqualsString{
           std::move(*predicate.mutable_not_equals_string()->mutable_value())});
+
+      case AttributeConstraint::Predicate::kNonStringOrMatchesRegex: {
+        shared_ptr<const RE2> re2 =
+          (*re2Factory)(predicate.non_string_or_matches_regex().regex());
+
+        Option<Error> error = validateRE2(*re2);
+        if (error.isSome()) {
+          return *error;
+        }
+
+        return Self(NonStringOrMatchesRegex{std::move(re2)});
+      }
+
+      case AttributeConstraint::Predicate::kNotMatchesRegex: {
+        shared_ptr<const RE2> re2 =
+          (*re2Factory)(predicate.not_matches_regex().regex());
+
+        Option<Error> error = validateRE2(*re2);
+        if (error.isSome()) {
+          return *error;
+        }
+
+        return Self(NotMatchesRegex{std::move(re2)});
+      }
 
       case AttributeConstraint::Predicate::PREDICATE_NOT_SET:
         return Error("Unknown predicate type");
@@ -150,15 +243,44 @@ private:
     }
   };
 
-  // TODO(asekretenko): Introduce offer constraints for regex match
-  // (MESOS-10173).
+  struct NonStringOrMatchesRegex
+  {
+    shared_ptr<const RE2> re2;
+
+    bool apply(const Nothing&) const { return false; }
+    bool apply(const string& str) const { return fullMatch(str, *re2); }
+
+    bool apply(const Attribute& attr) const
+    {
+      return attr.type() != Value::TEXT || fullMatch(attr.text().value(), *re2);
+    }
+  };
+
+  struct NotMatchesRegex
+  {
+    shared_ptr<const RE2> re2;
+
+    bool apply(const Nothing&) const { return true; }
+    bool apply(const string& str) const { return !fullMatch(str, *re2); }
+
+    bool apply(const Attribute& attr) const
+    {
+      // NOTE: For non-TEXT attributes, this predicate returns `true`,
+      // like its counterpart `NonStringOrMatchesRegex`.
+      return attr.type() != Value::TEXT ||
+             !fullMatch(attr.text().value(), *re2);
+    }
+  };
+
 
   using Predicate = Variant<
       Nothing,
       Exists,
       NotExists,
       NonStringOrEqualsString,
-      NotEqualsString>;
+      NotEqualsString,
+      NonStringOrMatchesRegex,
+      NotMatchesRegex>;
 
   Predicate predicate;
 
@@ -175,7 +297,9 @@ private:
         [&](const Exists& p) { return p.apply(attribute); },
         [&](const NotExists& p) { return p.apply(attribute); },
         [&](const NonStringOrEqualsString& p) { return p.apply(attribute); },
-        [&](const NotEqualsString& p) { return p.apply(attribute); });
+        [&](const NotEqualsString& p) { return p.apply(attribute); },
+        [&](const NonStringOrMatchesRegex& p) { return p.apply(attribute); },
+        [&](const NotMatchesRegex& p) { return p.apply(attribute); });
   }
 };
 
@@ -227,7 +351,8 @@ public:
   }
 
   static Try<AttributeConstraintEvaluator> create(
-      AttributeConstraint&& constraint)
+      AttributeConstraint&& constraint,
+      RE2Factory* re2Factory)
   {
     Option<Error> error = validate(constraint.selector());
     if (error.isSome()) {
@@ -236,7 +361,7 @@ public:
 
     Try<AttributeConstraintPredicate> predicate =
       AttributeConstraintPredicate::create(
-          std::move(*constraint.mutable_predicate()));
+          std::move(*constraint.mutable_predicate()), re2Factory);
 
     if (predicate.isError()) {
       return Error(predicate.error());
@@ -297,7 +422,9 @@ public:
         });
   }
 
-  static Try<OfferConstraintsFilterImpl> create(OfferConstraints&& constraints)
+  static Try<OfferConstraintsFilterImpl> create(
+    OfferConstraints&& constraints,
+    RE2Factory* re2Factory)
   {
     // TODO(asekretenko): This method performs a dumb 1:1 translation of
     // `AttributeConstraint`s without any reordering; this leaves room for
@@ -337,7 +464,8 @@ public:
         for (AttributeConstraint& constraint :
              *group_.mutable_attribute_constraints()) {
           Try<AttributeConstraintEvaluator> evaluator =
-            AttributeConstraintEvaluator::create(std::move(constraint));
+            AttributeConstraintEvaluator::create(
+                std::move(constraint), re2Factory);
 
           if (evaluator.isError()) {
             return Error(
@@ -363,17 +491,37 @@ private:
 using internal::OfferConstraintsFilterImpl;
 
 
-Try<OfferConstraintsFilter> OfferConstraintsFilter::create(
+class OfferConstraintsFilter::FactoryImpl
+{
+public:
+  Try<OfferConstraintsFilter> operator()(OfferConstraints&& constraints)
+  {
+    Try<OfferConstraintsFilterImpl> impl =
+      OfferConstraintsFilterImpl::create(std::move(constraints), &re2Factory);
+
+    if (impl.isError()) {
+      return Error(impl.error());
+    }
+
+    return OfferConstraintsFilter(std::move(*impl));
+  }
+private:
+  internal::RE2Factory re2Factory;
+};
+
+
+OfferConstraintsFilterFactory::OfferConstraintsFilterFactory()
+  : impl(new OfferConstraintsFilter::FactoryImpl())
+{}
+
+
+OfferConstraintsFilterFactory::~OfferConstraintsFilterFactory() = default;
+
+
+Try<OfferConstraintsFilter> OfferConstraintsFilterFactory::operator()(
     OfferConstraints&& constraints)
 {
-  Try<OfferConstraintsFilterImpl> impl =
-    OfferConstraintsFilterImpl::create(std::move(constraints));
-
-  if (impl.isError()) {
-    return Error(impl.error());
-  }
-
-  return OfferConstraintsFilter(std::move(*impl));
+  return (*CHECK_NOTNULL(impl))(std::move(constraints));
 }
 
 

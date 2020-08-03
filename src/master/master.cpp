@@ -2670,7 +2670,7 @@ void Master::subscribe(
 
   // TODO(asekretenko): Validate roles in offer constraints.
   if (validationError.isNone() && subscribe.has_offer_constraints()) {
-    Try<OfferConstraintsFilter> filter = OfferConstraintsFilter::create(
+    Try<OfferConstraintsFilter> filter = offerConstraintsFilterFactory(
         std::move(*subscribe.mutable_offer_constraints()));
 
     if (filter.isError()) {
@@ -2912,7 +2912,7 @@ void Master::subscribe(
 
   // TODO(asekretenko): Validate roles in offer constraints.
   if (validationError.isNone() && subscribe.has_offer_constraints()) {
-    Try<OfferConstraintsFilter> filter = OfferConstraintsFilter::create(
+    Try<OfferConstraintsFilter> filter = offerConstraintsFilterFactory(
         std::move(*subscribe.mutable_offer_constraints()));
 
     if (filter.isError()) {
@@ -3252,7 +3252,7 @@ Future<process::http::Response> Master::updateFramework(
   allocator::FrameworkOptions allocatorOptions;
   if (call.has_offer_constraints()) {
     // TODO(asekretenko): Validate roles in offer constraints.
-    Try<OfferConstraintsFilter> filter = OfferConstraintsFilter::create(
+    Try<OfferConstraintsFilter> filter = offerConstraintsFilterFactory(
         std::move(*call.mutable_offer_constraints()));
 
     if (filter.isError()) {
