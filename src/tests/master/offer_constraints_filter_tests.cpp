@@ -260,6 +260,196 @@ TEST(OfferConstraintsFilter, TwoAttributesWithTheSameName)
 }
 
 
+// Tests a single NonStringOrMatchesRegex constraint on a named attribute.
+TEST(OfferConstraintsFilter, NamedAttributeNonStringOrMatchesRegex)
+{
+  Try<OfferConstraints> constraints = OfferConstraintsFromJSON(R"~(
+    {
+      "role_constraints": {
+        "roleA": {
+          "groups": [{
+            "attribute_constraints": [{
+              "selector": {"attribute_name": "bar"},
+              "predicate": {"non_string_or_matches_regex": {"regex": "[a-d]+"}}
+            }]
+          }]
+        }
+      }
+    })~");
+
+  ASSERT_SOME(constraints);
+
+  const Try<OfferConstraintsFilter> filter =
+    OfferConstraintsFilterFactory()(std::move(*constraints));
+
+  ASSERT_SOME(filter);
+
+  // Attribute exists, is a text and matches the regex.
+  EXPECT_FALSE(
+      filter->isAgentExcluded("roleA", slaveInfoWithAttributes("bar:abcd")));
+
+  // Attribute is not a text.
+  EXPECT_FALSE(
+      filter->isAgentExcluded("roleA", slaveInfoWithAttributes("bar:123")));
+
+  EXPECT_FALSE(
+      filter->isAgentExcluded("roleA", slaveInfoWithAttributes("bar:[1-17]")));
+
+  // Attribute is a text which does not match.
+  EXPECT_TRUE(
+      filter->isAgentExcluded("roleA", slaveInfoWithAttributes("bar:bcde")));
+
+  // Attribute does not exist.
+  EXPECT_TRUE(
+      filter->isAgentExcluded("roleA", slaveInfoWithAttributes("foo:abcd")));
+}
+
+
+// Tests a single NotMatchesRegex constraint on a named attribute.
+TEST(OfferConstraintsFilter, NamedAttributeNotMatchesRegex)
+{
+  Try<OfferConstraints> constraints = OfferConstraintsFromJSON(R"~(
+    {
+      "role_constraints": {
+        "roleA": {
+          "groups": [{
+            "attribute_constraints": [{
+              "selector": {"attribute_name": "bar"},
+              "predicate": {"not_matches_regex": {"regex": "[a-d]+"}}
+            }]
+          }]
+        }
+      }
+    })~");
+
+  ASSERT_SOME(constraints);
+
+  const Try<OfferConstraintsFilter> filter =
+    OfferConstraintsFilterFactory()(std::move(*constraints));
+
+  ASSERT_SOME(filter);
+
+  // Attribute exists, is a text and matches the regex.
+  EXPECT_TRUE(
+      filter->isAgentExcluded("roleA", slaveInfoWithAttributes("bar:abcd")));
+
+  // Attribute is not a text.
+  EXPECT_FALSE(
+      filter->isAgentExcluded("roleA", slaveInfoWithAttributes("bar:123")));
+
+  EXPECT_FALSE(
+      filter->isAgentExcluded("roleA", slaveInfoWithAttributes("bar:[1-17]")));
+
+  // Attribute is a text which does not match.
+  EXPECT_FALSE(
+      filter->isAgentExcluded("roleA", slaveInfoWithAttributes("bar:bcde")));
+
+  // Attribute does not exist.
+  EXPECT_FALSE(
+      filter->isAgentExcluded("roleA", slaveInfoWithAttributes("foo:abcd")));
+}
+
+
+// Tests an invalid NonStringOrMatchesRegex constraint.
+TEST(OfferConstraintsFilter, InvalidNonStringOrMatchesRegex)
+{
+  Try<OfferConstraints> constraints = OfferConstraintsFromJSON(R"~(
+    {
+      "role_constraints": {
+        "roleA": {
+          "groups": [{
+            "attribute_constraints": [{
+              "selector": {"attribute_name": "bar"},
+              "predicate": {"non_string_or_matches_regex": {"regex": "[a-d"}}
+            }]
+          }]
+        }
+      }
+    })~");
+
+  ASSERT_SOME(constraints);
+
+  ASSERT_ERROR(OfferConstraintsFilterFactory()(std::move(*constraints)));
+}
+
+
+// Tests an invalid NotMatchesRegex constraint.
+TEST(OfferConstraintsFilter, InvalidNotMatchesRegex)
+{
+  Try<OfferConstraints> constraints = OfferConstraintsFromJSON(R"~(
+    {
+      "role_constraints": {
+        "roleA": {
+          "groups": [{
+            "attribute_constraints": [{
+              "selector": {"attribute_name": "bar"},
+              "predicate": {"not_matches_regex": {"regex": "[a-d"}}
+            }]
+          }]
+        }
+      }
+    })~");
+
+  ASSERT_SOME(constraints);
+
+  ASSERT_ERROR(OfferConstraintsFilterFactory()(std::move(*constraints)));
+}
+
+
+// Tests that the constraints cannot specify a regex which will result in a too
+// complex RE2 regex program.
+TEST(OfferConstraintsFilter, RegexTooComplex)
+{
+  auto regexConstraints = [](const string& regex) {
+    return OfferConstraintsFromJSON(
+        R"~(
+      {
+        "role_constraints": {
+          "roleA": {
+            "groups": [{
+              "attribute_constraints": [{
+                "selector": {"attribute_name": "bar"},
+                "predicate": {"not_matches_regex": {"regex": ")~" +
+        regex + R"~("}}
+              }]
+            }]
+          }
+        }
+      })~");
+  };
+
+  {
+    Try<OfferConstraints> good = regexConstraints("(a+){10}");
+    ASSERT_SOME(good);
+    ASSERT_SOME(OfferConstraintsFilterFactory()(std::move(*good)));
+  }
+  {
+    // This regexp can be compiled (fits into a memory limit) but results in
+    // a too large program.
+    Try<OfferConstraints> tooComplex = regexConstraints("(a+){50}");
+    ASSERT_SOME(tooComplex);
+    Try<OfferConstraintsFilter> filter =
+      OfferConstraintsFilterFactory()(std::move(*tooComplex));
+
+    ASSERT_ERROR(filter);
+    ASSERT_TRUE(strings::contains(filter.error(), "too complex"));
+  }
+
+  {
+    // This regexp does not even fit into a memory limit.
+    Try<OfferConstraints> tooLarge = regexConstraints("(a+){500}");
+    ASSERT_SOME(tooLarge);
+
+    Try<OfferConstraintsFilter> filter =
+      OfferConstraintsFilterFactory()(std::move(*tooLarge));
+
+    ASSERT_ERROR(filter);
+    ASSERT_TRUE(strings::contains(
+        filter.error(), "pattern too large - compile failed"));
+  }
+}
+
+
 // Tests a single group of two constraints.
 TEST(OfferConstraintsFilter, TwoConstraintsInGroup)
 {
